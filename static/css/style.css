@@ -1,0 +1,36 @@
+body {
+    font-family: 'Pontano Sans', sans-serif;
+    font-size: small;
+    color: #333;
+    background-color: #ddd;
+}
+
+a {
+    text-decoration: none;
+    border-bottom: 1px dotted #00f;
+}
+a:hover {
+    border-bottom-style: solid;
+}
+
+fieldset {
+    margin: 1em 0;
+}
+
+header, section {
+    margin: 2em;
+}
+
+.button {
+    margin: 0 1em;
+    padding: 0.5em 1em;
+    color: #333;
+    text-decoration: none;
+    border: 1px solid #888;
+    background-color: #f4f4f4;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    background: -moz-linear-gradient(top, #fff, #ccc);
+    background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ccc));
+}
