@@ -68,28 +68,6 @@ def add_scandal_submit():
 
     return {'scandal_id': next_file}
 
-@route('/add-timeline')
-def add_timeline():
-    template_dict = {
-        'title': 'Dodaj wydarzenia'
-    }
-
-    files = []
-    for fn in sorted(os.listdir(data_dir)):
-        name, _ = os.path.splitext(fn)
-        f = codecs.open(data_dir + fn, 'r', 'utf-8')
-        json = f.read()
-        f.close()
-        title = js.loads(json)['name-1']
-        files.append({
-            'name': name,
-            'title': title
-        })
-
-    template_dict['filelist'] = files
-
-    return template('add_timeline_list', template_dict)
-
 @route('/add-timeline/<scandal_id>')
 def add_timeline_by_id(scandal_id):
     template_dict = {
