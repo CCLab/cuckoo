@@ -108,4 +108,6 @@ def send_static(filename):
 def send_static(filename):
     return static_file(filename, root='static/img')
 
+# run(...) should be the last line in app.py
+# (automatically removed on deploy)
 run(host='localhost', port=8080, debug=True, reloader=True)
