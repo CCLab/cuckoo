@@ -9,14 +9,13 @@
 <body>
     <header>
         <h1>Afery</h1>
-        <a href="/add-scandal" class="button">Dodaj aferę</a>
     </header>
     <section>
-        <h2>Dodawanie wydarzeń do istniejących afer</h2>
         <ul>
 %for file in filelist:
             <li><a href="/add-timeline/{{file['name']}}">{{file['title']}}</a></li>
 %end
         </ul>
+        <a href="/add-scandal" class="button">Dodaj aferę</a>
     </section>
 </body>

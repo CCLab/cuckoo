@@ -4,9 +4,12 @@
 from bottle import route, run, template, static_file, request
 import simplejson as js
 import codecs, os
+import psycopg2 as pg
 
 file_path = os.path.dirname( __file__ )
 data_dir = os.path.join( file_path, 'data' ) + "/"
+
+conn = pg.connect("dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'")
 
 @route('/')
 def index():
@@ -14,17 +17,19 @@ def index():
         'title': 'Afery'
     }
 
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM scandals")
+    rows = cur.fetchall()
+
+    print rows
+
     files = []
-    for fn in sorted(os.listdir(data_dir)):
-        name, _ = os.path.splitext(fn)
-        f = codecs.open(data_dir + fn, 'r', 'utf-8')
-        json = f.read()
-        f.close()
-        title = js.loads(json)['name-1']
+    for r in rows:
         files.append({
-            'name': name,
-            'title': title
+            'name': r[0],
+            'title': r[1]
         })
+
     template_dict['filelist'] = files
 
     return template('index', template_dict)
@@ -39,28 +44,6 @@ def add_scandal():
 @route('/add-scandal', method='POST')
 def add_scandal_submit():
 
-#    for key, value in request.forms.items():
-#        if key == 'name-1' or key == 'name-2' or key == 'name-3':
-#            scandal['name'].append(value)
-#        elif key == 'description':
-#            scandal['description'] = value
-#        else:
-#            first, rest = key.split('-', 1)
-#            if first == "character":
-#                second, rest = rest.split('-', 1)
-#                scandal['characters'][int(second) - 1][rest] = value
-#            elif first in scandal:
-#                if rest in scandal[first]:
-#                    scandal[first][rest] = True
-#            else:
-#                print "unrecognized form key:", key
-#
-#    # filter empty characters
-#    # TODO: moar debug
-#    for character in scandal['characters']:
-#        if character.values() == ['','','']:
-#            scandal['characters'].remove(character)
-
     next_file = str("{0:>04}".format(int(sorted(os.listdir(data_dir)).pop().split('.')[0])+1))
     f = codecs.open(data_dir + next_file + ".json", 'w', 'utf-8')
     f.write(request.forms.json)
@@ -71,7 +54,7 @@ def add_scandal_submit():
 @route('/add-timeline/<scandal_id>')
 def add_timeline_by_id(scandal_id):
     template_dict = {
-        'title': 'Dodaj wydarzenia'
+        'title': 'Edycja wydarzenia'
     }
 
     f = codecs.open(data_dir + scandal_id + ".json", 'r', 'utf-8')
