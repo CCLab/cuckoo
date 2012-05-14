@@ -79,17 +79,9 @@ def add_timeline_by_id_submit(scandal_id):
 
     return "Wydarzenia dodane"
 
-@route('/static/css/<filename>')
-def send_static(filename):
-    return static_file(filename, root='static/css')
-
-@route('/static/js/<filename>')
-def send_static(filename):
-    return static_file(filename, root='static/js')
-
-@route('/static/img/<filename>')
-def send_static(filename):
-    return static_file(filename, root='static/img')
+@route('/static/<path:path>')
+def serve_static(path):
+    return static_file(path, root='./static/')
 
 # run(...) should be the last line in app.py
 # (automatically removed on deploy)
