@@ -8,14 +8,14 @@
 </head>
 <body>
     <header>
-        <h1>Afery</h1>
+        <h1>{{title or 'Afery'}}</h1>
     </header>
     <section>
         <ul>
-%for file in filelist:
-            <li><a href="/add-timeline/{{file['name']}}">{{file['title']}}</a></li>
+%for scandal in scandals:
+            <li><a href="/scandal/{{scandal['id']}}">{{scandal['name']}}</a><br>{{scandal['description']}}</li>
 %end
         </ul>
-        <a href="/add-scandal" class="button">Dodaj aferę</a>
+        <a href="/scandal/new" class="button">{{add_scandal}}</a>
     </section>
 </body>

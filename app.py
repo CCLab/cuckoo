@@ -1,83 +1,78 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bottle import route, run, template, static_file, request
+from bottle import route, run, template, static_file, request, abort
 import simplejson as js
 import codecs, os
-import psycopg2 as pg
+import psycopg2 as psql
+import psycopg2.extras as psqlextras
 
 file_path = os.path.dirname( __file__ )
 data_dir = os.path.join( file_path, 'data' ) + "/"
 
-conn = pg.connect("dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'")
+option_tables = ["scandal_types", "scandal_subtypes"]
+
+def db_cursor():
+    conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
+    conn = psql.connect(conn_string)
+    return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
 @route('/')
 def index():
     template_dict = {
-        'title': 'Afery'
+        "title": "Afery",
+        "add_scandal": "Dodaj aferę"
     }
 
-    cur = conn.cursor()
-    cur.execute("SELECT id, name, description FROM scandals")
-    rows = cur.fetchall()
+    cursor = db_cursor()
+    cursor.execute("SELECT id, name, description FROM scandals")
+    template_dict['scandals'] = [ row for row in cursor.fetchall()]
 
-    print rows
+    return template("index", template_dict)
 
-    files = []
-    for r in rows:
-        files.append({
-            'name': r[0],
-            'title': r[1]
-        })
-
-    template_dict['filelist'] = files
-
-    return template('index', template_dict)
-
-@route('/add-scandal')
-def add_scandal():
+@route('/scandal/<scandal_id:re:new|\d+>', method='GET')
+def scandal_show(scandal_id):
+    # new scandal data
     template_dict = {
-        'title': 'Dodaj aferę'
-    }
-    return template('add_scandal', template_dict)
-
-@route('/add-scandal', method='POST')
-def add_scandal_submit():
-
-    next_file = str("{0:>04}".format(int(sorted(os.listdir(data_dir)).pop().split('.')[0])+1))
-    f = codecs.open(data_dir + next_file + ".json", 'w', 'utf-8')
-    f.write(request.forms.json)
-    f.close()
-
-    return {'scandal_id': next_file}
-
-@route('/add-timeline/<scandal_id>')
-def add_timeline_by_id(scandal_id):
-    template_dict = {
-        'title': 'Edycja wydarzenia'
+        "title": "Nowa afera",
+        "save": "Zapisz",
+        "cancel": "Anuluj",
+        "scandal": {
+            "name": "Nowa afera",
+            "description": ""
+        }
     }
 
-    f = codecs.open(data_dir + scandal_id + ".json", 'r', 'utf-8')
-    json = f.read()
-    f.close()
-    template_dict['scandal_title'] = js.loads(json)['name-1']
-    template_dict['scandal_id'] = scandal_id
+    # get available scandal types
+    cursor = db_cursor()
+    cursor.execute("SELECT id, value FROM options_scandal_type")
+    template_dict["scandal_types"] = [ {'id': scandal_type['id'], 'value': scandal_type['value'], 'selected': 0} for scandal_type in cursor.fetchall() ]
 
-    return template('add_timeline', template_dict)
+    if scandal_id != "new":
+        # retrieve data and overwrite
+        scandal_id = int(scandal_id)
+        cursor.execute("SELECT name, description FROM scandals WHERE id = {0}".format(scandal_id))
+        template_dict["scandal"] = cursor.fetchone()
 
-@route('/add-timeline/<scandal_id>', method='POST')
-def add_timeline_by_id_submit(scandal_id):
-    f = codecs.open(data_dir + scandal_id + ".json", 'r', 'utf-8')
-    json = f.read()
-    f.close()
-    scandal = js.loads(json)
-    scandal['timeline'] = js.loads(request.forms.json)
+    return template("scandal", template_dict)
 
-    f = codecs.open(data_dir + scandal_id + ".json", 'w', 'utf-8')
-    f.write(js.dumps(scandal))
-    f.close()
+@route('/scandal/<scandal_id:re:new|\d+>', method='POST')
+def scandal_save(scandal_id):
+    return "scandal save: {0}".format(scandal_id)
 
-    return "Wydarzenia dodane"
+@route('/options/<realm>', method='GET')
+def options_get(realm):
+    if realm in option_tables:
+        cursor = db_cursor()
+        cursor.execute("SELECT id, name FROM {0}".format(realm))
+        options = [ row for row in cursor.fetchall() ]
+        return js.dumps(options)
+    else:
+        abort(404, "Bad options endpoint: {0}.".format(realm))
+
+@route('/options/<realm>', method='POST')
+def options_get(realm):
+    return "adding realm: " + str(realm)
 
 @route('/static/<path:path>')
 def serve_static(path):
