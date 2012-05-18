@@ -11,11 +11,15 @@
         <h1>{{title or 'Afery'}}</h1>
     </header>
     <section>
-        <ul>
+        <ul class="boxed-list scandal-list">
 %for scandal in scandals:
-            <li><a href="/scandal/{{scandal['id']}}">{{scandal['name']}}</a><br>{{scandal['description']}}</li>
+            <li><a href="/scandal/{{scandal['id']}}"><strong>{{scandal['name']}}</strong>: {{scandal['description']}}</a></li>
 %end
+            <li><a href="/scandal/new"><strong>{{add_scandal}}</strong></a></li>
         </ul>
-        <a href="/scandal/new" class="button">{{add_scandal}}</a>
+        
     </section>
+    <footer>
+        Prob'ly some license info.
+    </footer>
 </body>

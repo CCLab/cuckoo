@@ -15,6 +15,8 @@
         <div id="dialog-scandal"></div>
         <form action="/add-scandal" method="post" id="form-scandal">
             <label for="name">Nazwa</label> <input type="text" id="name" />
+            <input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+
             <br><label for="description">Krótki opis</label><br><textarea id="description" rows="8" cols="50"></textarea>
             <br><label for="scandal_type">Typ</label> <select id="scandal_type">
                 <option value="0">(brak)</option>
@@ -25,20 +27,23 @@
             <fieldset id="consequences">
                 <legend>Szersze konsekwencje</legend>
             </fieldset>
+
             <h2>Wydarzenia</h2>
-            <div class="event">
-                <label for="event-1-location">Lokacja</label> <select name="event-1-location">
-                    <option value="2">ogólnopolska</option>
-                </select>
-                <br>Czas
-                <br><label for="event-1-type">Typ</label> <select name="event-1-type">
-                    <option value="2">postępowanie sądowe</option>
-                </select>
-            </div>
-            <div class="event">
-                <input type="button" value="Dodaj wydarzenie">
-            </div>
-            <br><input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+            <ul class="boxed-list event-list" id="events">
+                <li>
+                    <label for="event-1-location">Lokacja</label> <select name="event-1-location">
+                        <option value="2">ogólnopolska</option>
+                    </select>
+                    <br>Czas
+                    <br><label for="event-1-type">Typ</label> <select name="event-1-type">
+                        <option value="2">postępowanie sądowe</option>
+                    </select>
+                    <br><label for="event-1-description">Opis</label>
+                    <br><textarea id="event-1-description"></textarea>
+                </li>
+
+                <li><a href="#">Dodaj wydarzenie</a></li>
+            </ul>
         </form>
     </section>
 </body>

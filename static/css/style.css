@@ -17,7 +17,7 @@ fieldset {
     margin: 1em 0;
 }
 
-header, section {
+header, section, footer {
     margin: 2em;
 }
 
@@ -38,4 +38,32 @@ header, section {
 .event {
     border-top: 1px solid rgba(0,0,0,0.333);
     padding: 10px;
+}
+
+.boxed-list {
+    padding: 0;
+    list-style-type: none;
+    border-right: 1px solid rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    background-color: #eee;
+}
+.boxed-list li {
+    border-left: 1px solid rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(0,0,0,0.2);
+}
+
+.scandal-list a {
+    display: block;
+    padding: 1em;
+    border: none;
+    color: #333;
+}
+
+.event-list li {
+    padding: 1em;
+}
+.event-list li > a {
+    display: block;
+    border: none;
+    color: #333;
 }
