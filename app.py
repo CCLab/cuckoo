@@ -11,9 +11,17 @@ file_path = os.path.dirname( __file__ )
 data_dir = os.path.join( file_path, 'data' ) + "/"
 
 # some database structure description
-option_tables = ["scandal_types", "scandal_subtypes", "scandal_consequences"]
+option_tables = [
+    "scandal_types",
+    "scandal_subtypes",
+    "scandal_consequences",
+    "actor_types",
+    "actor_roles",
+    "actor_affiliations",
+    "locations"
+]
 option_tables_with_parents = ["scandal_subtypes"]
-option_tables_may_be_human = ["actor_types"]
+option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations"]
 
 def db_cursor():
     conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
