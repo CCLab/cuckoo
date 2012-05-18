@@ -10,21 +10,24 @@ import psycopg2.extras as psqlextras
 file_path = os.path.dirname( __file__ )
 data_dir = os.path.join( file_path, 'data' ) + "/"
 
+conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
+
 # some database structure description
 option_tables = [
     "scandal_types",
     "scandal_subtypes",
     "scandal_consequences",
+    "event_types",
+    "event_subtypes",
+    "locations",
     "actor_types",
     "actor_roles",
-    "actor_affiliations",
-    "locations"
+    "actor_affiliations"
 ]
-option_tables_with_parents = ["scandal_subtypes"]
+option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations"]
 
 def db_cursor():
-    conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
@@ -50,7 +53,7 @@ def scandal_show(scandal_id):
         "cancel": "Anuluj",
         "scandal": {
             "name": "Nowa afera",
-            "description": ""
+            "description": "",
         }
     }
 
@@ -83,6 +86,10 @@ def api_scandal_get(scandal_id):
         scandal["consequences"] = []
     else:
         scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
+
+    # fetch events for that scandal
+    cursor.execute("SELECT id FROM events WHERE scandal_id = {0}".format(scandal_id))
+
     return js.dumps(scandal)
 
 @route('/api/scandal/<scandal_id:int>', method='POST')
@@ -100,6 +107,10 @@ def options_get(realm):
             # display only children of requested parent
             parent_id = int(request.query.parent)
             cursor.execute("SELECT id, name FROM {0} WHERE parent_id = {1}".format(realm, parent_id))
+        elif realm in option_tables_may_be_human:
+            # display only options for human OR non-human
+            for_human = "TRUE" if request.query.human == "1" else "FALSE"
+            cursor.execute("SELECT id, name FROM {0} WHERE for_human = {1}".format(realm, for_human))
         else:
             # just dump all of them
             cursor.execute("SELECT id, name FROM {0}".format(realm))
@@ -111,17 +122,23 @@ def options_get(realm):
 @route('/options/<realm>', method='POST')
 def options_get(realm):
     if realm in option_tables:
-        cursor = db_cursor()
+        conn = psql.connect(conn_string)
+        cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
         if realm in option_tables_with_parents:
             # save with the requested parent
-            parent_id = int(request.query.parent)
-            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES ({1}, {2}) RETURNING id".format(realm, parent_id, request.query.name))
+            parent_id = int(request.forms.parent)
+            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES ({1}, '{2}') RETURNING id".format(realm, parent_id, request.forms.name))
+        elif realm in option_tables_may_be_human:
+            # save for humans/non-humans
+            for_human = "TRUE" if request.forms.human == "1" else "FALSE"
+            cursor.execute("INSERT INTO {0} (for_human, name) VALUES ({1}, '{2}') RETURNING id".format(realm, for_human, request.forms.name))
         else:
             # it does not need a parent, it'll live
-            cursor.execute("INSERT INTO {0} (name) VALUES ({1}) RETURNING id".format(realm, request.query.name))
-        new_row_id = cursor.fetchone()[0]
-        cursor.commit()
-        return js.dumps(new_row_id)
+            cursor.execute("INSERT INTO {0} (name) VALUES ('{1}') RETURNING id".format(realm, request.forms.name))
+        # info = {'id': *new_row_id*}
+        info = cursor.fetchone()
+        conn.commit()
+        return info
     else:
         abort(404, "Bad options endpoint: {0}.".format(realm))
 

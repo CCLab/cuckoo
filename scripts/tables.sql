@@ -33,6 +33,7 @@ CREATE TABLE actor_types (
     name character varying(64),
     for_human boolean
 );
+
 CREATE SEQUENCE actor_types_id_seq
     START WITH 1
     INCREMENT BY 1
@@ -65,8 +66,44 @@ CREATE SEQUENCE actors_id_seq
 
 ALTER SEQUENCE actors_id_seq OWNED BY actors.id;
 
+CREATE TABLE event_subtypes (
+    id integer NOT NULL,
+    parent_id integer,
+    name character varying(128)
+);
+
+CREATE SEQUENCE event_subtypes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE event_subtypes_id_seq OWNED BY event_subtypes.id;
+
+CREATE TABLE event_types (
+    id integer NOT NULL,
+    name character varying(128)
+);
+
+CREATE SEQUENCE event_types_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE event_types_id_seq OWNED BY event_types.id;
+
 CREATE TABLE events (
-    id integer NOT NULL
+    id integer NOT NULL,
+    description text,
+    scandal_id integer,
+    location_id integer,
+    event_date date,
+    publication_date date,
+    type_id integer,
+    subtype_id integer
 );
 
 CREATE SEQUENCE events_id_seq
@@ -153,20 +190,29 @@ CREATE SEQUENCE scandals_id_seq
 
 ALTER SEQUENCE scandals_id_seq OWNED BY scandals.id;
 
--- sequences
-
 ALTER TABLE ONLY actor_affiliations ALTER COLUMN id SET DEFAULT nextval('actor_affiliations_id_seq'::regclass);
-ALTER TABLE ONLY actor_roles ALTER COLUMN id SET DEFAULT nextval('actor_roles_id_seq'::regclass);
-ALTER TABLE ONLY actor_types ALTER COLUMN id SET DEFAULT nextval('actor_types_id_seq'::regclass);
-ALTER TABLE ONLY actors ALTER COLUMN id SET DEFAULT nextval('actors_id_seq'::regclass);
-ALTER TABLE ONLY events ALTER COLUMN id SET DEFAULT nextval('events_id_seq'::regclass);
-ALTER TABLE ONLY locations ALTER COLUMN id SET DEFAULT nextval('locations_id_seq'::regclass);
-ALTER TABLE ONLY scandal_consequences ALTER COLUMN id SET DEFAULT nextval('scandal_consequences_id_seq'::regclass);
-ALTER TABLE ONLY scandal_subtypes ALTER COLUMN id SET DEFAULT nextval('scandal_subtypes_id_seq'::regclass);
-ALTER TABLE ONLY scandal_types ALTER COLUMN id SET DEFAULT nextval('scandal_types_id_seq'::regclass);
-ALTER TABLE ONLY scandals ALTER COLUMN id SET DEFAULT nextval('scandals_id_seq'::regclass);
 
--- constraints
+ALTER TABLE ONLY actor_roles ALTER COLUMN id SET DEFAULT nextval('actor_roles_id_seq'::regclass);
+
+ALTER TABLE ONLY actor_types ALTER COLUMN id SET DEFAULT nextval('actor_types_id_seq'::regclass);
+
+ALTER TABLE ONLY actors ALTER COLUMN id SET DEFAULT nextval('actors_id_seq'::regclass);
+
+ALTER TABLE ONLY event_subtypes ALTER COLUMN id SET DEFAULT nextval('event_subtypes_id_seq'::regclass);
+
+ALTER TABLE ONLY event_types ALTER COLUMN id SET DEFAULT nextval('event_types_id_seq'::regclass);
+
+ALTER TABLE ONLY events ALTER COLUMN id SET DEFAULT nextval('events_id_seq'::regclass);
+
+ALTER TABLE ONLY locations ALTER COLUMN id SET DEFAULT nextval('locations_id_seq'::regclass);
+
+ALTER TABLE ONLY scandal_consequences ALTER COLUMN id SET DEFAULT nextval('scandal_consequences_id_seq'::regclass);
+
+ALTER TABLE ONLY scandal_subtypes ALTER COLUMN id SET DEFAULT nextval('scandal_subtypes_id_seq'::regclass);
+
+ALTER TABLE ONLY scandal_types ALTER COLUMN id SET DEFAULT nextval('scandal_types_id_seq'::regclass);
+
+ALTER TABLE ONLY scandals ALTER COLUMN id SET DEFAULT nextval('scandals_id_seq'::regclass);
 
 ALTER TABLE ONLY actor_affiliations
     ADD CONSTRAINT actor_affiliations_pk PRIMARY KEY (id);
@@ -182,6 +228,12 @@ ALTER TABLE ONLY actors_events
 
 ALTER TABLE ONLY actors
     ADD CONSTRAINT actors_id_pk PRIMARY KEY (id);
+
+ALTER TABLE ONLY event_subtypes
+    ADD CONSTRAINT event_subtypes_pk PRIMARY KEY (id);
+
+ALTER TABLE ONLY event_types
+    ADD CONSTRAINT event_types_pk PRIMARY KEY (id);
 
 ALTER TABLE ONLY events
     ADD CONSTRAINT events_id_pk PRIMARY KEY (id);
@@ -201,6 +253,8 @@ ALTER TABLE ONLY scandal_types
 ALTER TABLE ONLY scandals
     ADD CONSTRAINT scandals_id_pk PRIMARY KEY (id);
 
+CREATE INDEX fki_scandal_scandal_type ON scandals USING btree (type_id);
+
 ALTER TABLE ONLY actors_events
     ADD CONSTRAINT actors_events_actors FOREIGN KEY (actor_id) REFERENCES actors(id);
 
@@ -215,6 +269,21 @@ ALTER TABLE ONLY actors_events
 
 ALTER TABLE ONLY actors_events
     ADD CONSTRAINT actors_events_types FOREIGN KEY (type_id) REFERENCES actor_types(id);
+
+ALTER TABLE ONLY event_subtypes
+    ADD CONSTRAINT event_subtypes_event_types FOREIGN KEY (parent_id) REFERENCES event_types(id);
+
+ALTER TABLE ONLY events
+    ADD CONSTRAINT events_event_subtypes FOREIGN KEY (subtype_id) REFERENCES event_subtypes(id);
+
+ALTER TABLE ONLY events
+    ADD CONSTRAINT events_event_types FOREIGN KEY (type_id) REFERENCES event_types(id);
+
+ALTER TABLE ONLY events
+    ADD CONSTRAINT events_locations FOREIGN KEY (location_id) REFERENCES locations(id);
+
+ALTER TABLE ONLY events
+    ADD CONSTRAINT events_scandals FOREIGN KEY (scandal_id) REFERENCES scandals(id);
 
 ALTER TABLE ONLY scandal_subtypes
     ADD CONSTRAINT scandal_subtypes_scandal_types FOREIGN KEY (parent_id) REFERENCES scandal_types(id);
