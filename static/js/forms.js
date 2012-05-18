@@ -1,3 +1,5 @@
+var scandal_types = [];
+
 function refresh_subtypes(scandal_type) {
     if(scandal_type == undefined) {
         scandal_type = $("#scandal_type").val();
@@ -11,7 +13,30 @@ function refresh_subtypes(scandal_type) {
     });
 }
 
+function add_event_form(event_dict) {
+    var template = '<li>'
+        + '<label for="event-1-location">Lokacja</label> <select name="event-1-location">'
+        + '<option value="2">ogólnopolska</option>'
+        + '</select>'
+        + '<br>Czas'
+        + '<br><label for="event-1-type">Typ</label> <select name="event-1-type">'
+        + '<option value="2">postępowanie sądowe</option>'
+        + '</select>'
+        + '<br><label for="event-1-description">Opis</label>'
+        + '<br><textarea id="event-1-description"></textarea>'
+        + '</li>';
+    $("#btn-add-event").before(Mustache.render(template, event_dict));
+}
+
 $(document).ready(function() {
+
+    // overload form events and buttons
+
+    $("#btn-add-event a").attr('href', 'javascript:add_event_form({})');
+
+    // load possible options to lists
+
+    // load scandal data & events data while making sure options on the subtype list load ok
     $("#form-scandal").submit(function() {
         var scandal = {};
         $('input[type="text"]').each(function() {
@@ -37,7 +62,7 @@ $(document).ready(function() {
             refresh_subtypes($(this).val());
         });
 
-        /* load scandal data */
+        /* determine which scandal are we talking about */
         var path = window.location.pathname.split("/");
         var scandal_id = path[path.length-1];
         $.getJSON("/api/scandal/"+scandal_id, function(data) {
@@ -48,9 +73,14 @@ $(document).ready(function() {
             // FIXME: incorrect type/subtype loading
             // get to know it, then try to impress somebody
             $("#scandal_subtype").val(data.subtype_id);
+
+            // if there are no events
+            // FIXME
+            // load one empty event form
+            add_event_form({});
         });
     });
-
+    
     $.getJSON("/options/scandal_consequences", function(data) {
         $.each(data, function(index, value) {
             $("#consequences").append('<input type="checkbox" id="consequence-'+value.id+'"><label for="consequence-'+value.id+'">'+value.name+'</label>');

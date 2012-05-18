@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Pontano+Sans&subset=latin,latin-ext">
     <script src="/static/js/jquery-1.7.1.min.js"></script>
     <script src="/static/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script src="/static/js/mustache.js"></script>
     <script src="/static/js/forms.js"></script>
 </head>
 <body>
@@ -30,19 +31,8 @@
 
             <h2>Wydarzenia</h2>
             <ul class="boxed-list event-list" id="events">
-                <li>
-                    <label for="event-1-location">Lokacja</label> <select name="event-1-location">
-                        <option value="2">ogólnopolska</option>
-                    </select>
-                    <br>Czas
-                    <br><label for="event-1-type">Typ</label> <select name="event-1-type">
-                        <option value="2">postępowanie sądowe</option>
-                    </select>
-                    <br><label for="event-1-description">Opis</label>
-                    <br><textarea id="event-1-description"></textarea>
-                </li>
-
-                <li><a href="#">Dodaj wydarzenie</a></li>
+                <!-- thou shalt load forms dynamically -->
+                <li id="btn-add-event"><a href="#">Dodaj wydarzenie</a></li>
             </ul>
         </form>
     </section>
