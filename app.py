@@ -59,7 +59,7 @@ def scandal_show(scandal_id):
 @route('/api/scandal/<scandal_id:re:new|\d+>', method='GET')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    cursor.execute("SELECT name, description, type_id, subtype_id, consequences FROM scandals WHERE id = {0}".format(scandal_id))
+    cursor.execute("SELECT name, description, type_id, subtype_id, consequences FROM scandals WHERE id = %s", (scandal_id,))
     scandal = cursor.fetchone()
     # add id to the mix
     scandal["id"] = scandal_id
@@ -70,7 +70,7 @@ def api_scandal_get(scandal_id):
         scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
 
     # fetch events for that scandal
-    cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = {0}".format(scandal_id))
+    cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s", (scandal_id,))
     events = cursor.fetchall()
     # TODO: mill through events, find actors and their attributes
     scandal["events"] = events
@@ -81,16 +81,12 @@ def api_scandal_get(scandal_id):
 def api_scandal_post(scandal_id):
     data = js.loads(request.forms.payload)
     data["consequences"] = ",".join([ str(el) for el in data['consequences'] ])
-    data["type_id"] = "NULL" if data["type_id"] is None else data["type_id"]
-    data["subtype_id"] = "NULL" if data["subtype_id"] is None else data["subtype_id"]
-    print scandal_id
-    print data
 
     conn = psql.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES ('{0}', '{1}', {2}, {3}, '{4}') RETURNING id".format(data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
+        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
@@ -98,8 +94,7 @@ def api_scandal_post(scandal_id):
         }
     else:
         scandal_id = int(scandal_id)
-        print type(data['description'])
-        cursor.execute("UPDATE scandals SET name = '{0}', description = %s, type_id = {1}, subtype_id = {2}, consequences = '{3}' WHERE id = {4}".format(data["name"], data["type_id"], data["subtype_id"], data["consequences"], scandal_id), (data["description"],))
+        cursor.execute("UPDATE scandals SET name = %s, description = %s, type_id = %s, subtype_id = %s, consequences = %s WHERE id = %s", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], scandal_id))
         response = {
             "message": "Data stored."
         }
