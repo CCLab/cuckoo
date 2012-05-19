@@ -9,9 +9,9 @@ var subtype_id = null;
 /* mustache templates */
 
 var tpl_select_option = '<option value="{{id}}">{{name}}</option>';
-var tpl_consequence = '<input type="checkbox" id="scandal_consequence_{{id}}"><label for="scandal_consequence_{{id}}">{{name}}</label>';
+var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" value="{{id}}"><label for="scandal_consequence-{{id}}">{{name}}</label>';
 // FIXME: this is nasty
-var tpl_event_form = '<li>'
+var tpl_event_form = '<li class="event">'
     + '<label for="event-1-location">Lokacja</label> <select name="event-1-location">'
     + '<option value="2">ogólnopolska</option>'
     + '</select>'
@@ -88,8 +88,8 @@ $(document).ready(function() {
             /* if id was given, load me some scandal data */
             if(scandal_id !== null) {
                 $.getJSON("/api/scandal/"+scandal_id, function(data) {
-                    $("#name").val(data.name);
-                    $("#description").val(data.description);
+                    $("#scandal_name").val(data.name);
+                    $("#scandal_description").val(data.description);
                     $("#scandal_type").val(data.type_id).change();
 
                     // FIXME: do subtype loading properly
@@ -101,10 +101,14 @@ $(document).ready(function() {
                     // HACK for subtype setting
                     subtype_id = data.subtype_id;
                     // end HACK
-
+                    
+                    $.each(data.consequences, function(index, value) {
+                        $("#scandal_consequence-"+value).attr("checked", "checked");
+                    });
+                    
                     // TODO: load me some events
                 });
-            } else alert("new scandal!");
+            }
 
             /* button handlers */
 
@@ -113,7 +117,18 @@ $(document).ready(function() {
             /* form handlers */
 
             $("#form-scandal").submit(function() {
-                var scandal = {};
+                var scandal = {
+                    "name": $("#scandal_name").val(),
+                    "description": $("#scandal_description").val(),
+                    "type_id": ($("#scandal_type").val() === "0") ? null : parseInt($("#scandal_type").val()),
+                    "subtype_id": ($("#scandal_subtype").val() === "0") ? null : parseInt($("#scandal_subtype").val())
+                };
+
+                scandal["consequences"] = new Array();
+                $("#scandal_consequences input:checkbox:checked").each(function(index, value) {
+                    scandal["consequences"].push(parseInt($(this).val()));
+                });
+
                 /*
 
                 // save scandal data
@@ -126,10 +141,18 @@ $(document).ready(function() {
                     scandal[$(this).attr('name')] = ( $(this).attr('checked') == "checked" ? true : false );
                 });
 
-                $.post("/scandal/new", {'json': JSON.stringify(scandal)}, function(data) {
-                    $("#dialog-scandal").dialog({ autoOpen: false, title: "Afera dodana" }).html('Przejdź do <a href="/">strony głównej</a>.').dialog("open")
-                });
                 */
+
+                var post_url = (scandal_id === null) ? "/api/scandal/new" : "/api/scandal/" + scandal_id;
+                $.post(post_url, {"payload": JSON.stringify(scandal)}, function(data) {
+                    var response = $.parseJSON(data);
+                    $("#dialog").dialog({ autoOpen: false, title: response.message }).html( data ).dialog("open");
+
+                    /* set scandal_id on in case of new scandal */
+                    if(typeof(response.id) !== "undefined") {
+                        scandal_id = response.id;
+                    }
+                });
 
                 return false;
             });

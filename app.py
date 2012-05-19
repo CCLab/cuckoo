@@ -86,15 +86,37 @@ def api_scandal_get(scandal_id):
     # fetch events for that scandal
     cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = {0}".format(scandal_id))
     events = cursor.fetchall()
-    # mill through events, find actors and their attributes
+    # TODO: mill through events, find actors and their attributes
     scandal["events"] = events
 
     return js.dumps(scandal)
 
-@route('/api/scandal/<scandal_id:int>', method='POST')
-def api_scandal_post(scandal_id):
+@route('/api/scandal/new', method='POST')
+def api_scandal_new():
+    data = js.loads(request.forms.payload)
+    data["consequences"] = ",".join([ str(el) for el in data['consequences'] ])
+    data["type_id"] = "NULL" if data["type_id"] is None else data["type_id"]
+    data["subtype_id"] = "NULL" if data["subtype_id"] is None else data["subtype_id"]
+    print data
+
+    conn = psql.connect(conn_string)
+    cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+    cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES ('{0}', '{1}', {2}, {3}, '{4}') RETURNING id".format(data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
+    scandal_id = cursor.fetchone()["id"]
+    conn.commit()
+
     response = {
         "message": "Data stored.",
+        "id": scandal_id
+    }
+    return js.dumps(response)
+
+@route('/api/scandal/<scandal_id:int>', method='POST')
+def api_scandal_update(scandal_id):
+    # recreate all events
+    # OR keep event_ids in hidden form inputs
+    response = {
+        "message": "Data stored."
     }
     return js.dumps(response)
 

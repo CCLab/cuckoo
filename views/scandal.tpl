@@ -13,12 +13,12 @@
 </head>
 <body>
     <section>
-        <div id="dialog-scandal"></div>
+        <div id="dialog"></div>
         <form action="/add-scandal" method="post" id="form-scandal">
-            <label for="name">Nazwa</label> <input type="text" id="name" />
+            <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
             <input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
 
-            <br><label for="description">Krótki opis</label><br><textarea id="description" rows="8" cols="50"></textarea>
+            <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
             <br><label for="scandal_type">Typ</label> <select id="scandal_type">
                 <option value="0">(brak)</option>
             </select>
