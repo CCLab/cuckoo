@@ -70,10 +70,6 @@ def scandal_show(scandal_id):
 
     return template("scandal", template_dict)
 
-@route('/scandal/<scandal_id:re:new|\d+>', method='POST')
-def scandal_save(scandal_id):
-    return "scandal save: {0}".format(scandal_id)
-
 @route('/api/scandal/<scandal_id:int>', method='GET')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
