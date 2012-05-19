@@ -27,6 +27,8 @@ option_tables = [
 option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations"]
 
+# TODO: change SQL.format(..) to proper psycopg syntax for Unicode support
+
 def db_cursor():
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
@@ -70,7 +72,7 @@ def scandal_show(scandal_id):
 
     return template("scandal", template_dict)
 
-@route('/api/scandal/<scandal_id:int>', method='GET')
+@route('/api/scandal/<scandal_id:re:new|\d+>', method='GET')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
     cursor.execute("SELECT name, description, type_id, subtype_id, consequences FROM scandals WHERE id = {0}".format(scandal_id))
@@ -91,33 +93,38 @@ def api_scandal_get(scandal_id):
 
     return js.dumps(scandal)
 
-@route('/api/scandal/new', method='POST')
-def api_scandal_new():
+@route('/api/scandal/<scandal_id:re:new|\d+>', method='POST')
+def api_scandal_post(scandal_id):
     data = js.loads(request.forms.payload)
     data["consequences"] = ",".join([ str(el) for el in data['consequences'] ])
     data["type_id"] = "NULL" if data["type_id"] is None else data["type_id"]
     data["subtype_id"] = "NULL" if data["subtype_id"] is None else data["subtype_id"]
+    print scandal_id
     print data
 
     conn = psql.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
-    cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES ('{0}', '{1}', {2}, {3}, '{4}') RETURNING id".format(data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
-    scandal_id = cursor.fetchone()["id"]
+
+    if scandal_id == "new":
+        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES ('{0}', '{1}', {2}, {3}, '{4}') RETURNING id".format(data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
+        scandal_id = cursor.fetchone()["id"]
+        response = {
+            "message": "Data stored.",
+            "id": scandal_id
+        }
+    else:
+        scandal_id = int(scandal_id)
+        print type(data['description'])
+        cursor.execute("UPDATE scandals SET name = '{0}', description = %s, type_id = {1}, subtype_id = {2}, consequences = '{3}' WHERE id = {4}".format(data["name"], data["type_id"], data["subtype_id"], data["consequences"], scandal_id), (data["description"],))
+        response = {
+            "message": "Data stored."
+        }
+
     conn.commit()
 
-    response = {
-        "message": "Data stored.",
-        "id": scandal_id
-    }
-    return js.dumps(response)
+    # TODO: parse me some events
+    # keep event_ids in hidden form inputs
 
-@route('/api/scandal/<scandal_id:int>', method='POST')
-def api_scandal_update(scandal_id):
-    # recreate all events
-    # OR keep event_ids in hidden form inputs
-    response = {
-        "message": "Data stored."
-    }
     return js.dumps(response)
 
 @route('/options/<realm>', method='GET')
