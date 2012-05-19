@@ -50,25 +50,9 @@ def index():
 def scandal_show(scandal_id):
     # new scandal data
     template_dict = {
-        "title": "Nowa afera",
         "save": "Zapisz",
-        "cancel": "Anuluj",
-        "scandal": {
-            "name": "Nowa afera",
-            "description": "",
-        }
+        "cancel": "Anuluj"
     }
-
-    # get available scandal types
-    cursor = db_cursor()
-    cursor.execute("SELECT id, name FROM scandal_types")
-    template_dict["scandal_types"] = [ {'id': t['id'], 'name': t['name'], 'selected': 0} for t in cursor.fetchall() ]
-
-    if scandal_id != "new":
-        # retrieve data and overwrite
-        scandal_id = int(scandal_id)
-        cursor.execute("SELECT name, description FROM scandals WHERE id = {0}".format(scandal_id))
-        template_dict["scandal"] = cursor.fetchone()
 
     return template("scandal", template_dict)
 
