@@ -25,7 +25,7 @@
             <br><label for="scandal_subtype">Podtyp</label> <select id="scandal_subtype" disabled="disabled">
                 <option value="0">(brak)</option>
             </select>
-            <fieldset id="consequences">
+            <fieldset id="scandal_consequences">
                 <legend>Szersze konsekwencje</legend>
             </fieldset>
 
