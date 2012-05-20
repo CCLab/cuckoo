@@ -112,12 +112,10 @@ def options_get(realm):
         cursor = db_cursor()
         if realm in option_tables_with_parents:
             # display only children of requested parent
-            parent_id = int(request.query.parent)
-            cursor.execute("SELECT id, name FROM {0} WHERE parent_id = {1}".format(realm, parent_id))
+            cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(realm), (request.query.parent,))
         elif realm in option_tables_may_be_human:
             # display only options for human OR non-human
-            for_human = "TRUE" if request.query.human == "1" else "FALSE"
-            cursor.execute("SELECT id, name FROM {0} WHERE for_human = {1}".format(realm, for_human))
+            cursor.execute("SELECT id, name FROM {0} WHERE for_human = %s".format(realm), (request.query.human,))
         else:
             # just dump all of them
             cursor.execute("SELECT id, name FROM {0}".format(realm))
@@ -133,15 +131,13 @@ def options_get(realm):
         cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
         if realm in option_tables_with_parents:
             # save with the requested parent
-            parent_id = int(request.forms.parent)
-            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES ({1}, '{2}') RETURNING id".format(realm, parent_id, request.forms.name))
+            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.parent, request.forms.name))
         elif realm in option_tables_may_be_human:
             # save for humans/non-humans
-            for_human = "TRUE" if request.forms.human == "1" else "FALSE"
-            cursor.execute("INSERT INTO {0} (for_human, name) VALUES ({1}, '{2}') RETURNING id".format(realm, for_human, request.forms.name))
+            cursor.execute("INSERT INTO {0} (for_human, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.human, request.forms.name))
         else:
             # it does not need a parent, it'll live
-            cursor.execute("INSERT INTO {0} (name) VALUES ('{1}') RETURNING id".format(realm, request.forms.name))
+            cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm,), (request.forms.name))
         # info = {'id': *new_row_id*}
         info = cursor.fetchone()
         conn.commit()
