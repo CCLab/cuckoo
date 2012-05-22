@@ -129,12 +129,12 @@ def options_get(realm):
 
         if realm in option_tables_with_parents:
             # specify parent (integer)
-            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.parent, request.forms.name))
+            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
         elif realm in option_tables_may_be_human:
             # specify human (boolean)
-            cursor.execute("INSERT INTO {0} (for_human, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.human, request.forms.name))
+            cursor.execute("INSERT INTO {0} (for_human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
         else:
-            cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm,), (request.forms.name))
+            cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm), (request.forms.name,))
 
         # returning {'id': *new_row_id*}
         info = cursor.fetchone()
