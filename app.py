@@ -3,12 +3,8 @@
 
 from bottle import route, run, template, static_file, request, abort
 import simplejson as js
-import codecs, os
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
-
-file_path = os.path.dirname( __file__ )
-data_dir = os.path.join( file_path, 'data' ) + "/"
 
 conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
 
@@ -27,9 +23,9 @@ option_tables = [
 option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations"]
 
-# TODO: change SQL.format(..) to proper psycopg syntax for Unicode support
-
 def db_cursor():
+    # TODO: deal with conn.commit() somehow
+    # maybe turn autocommit on?
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
@@ -110,15 +106,16 @@ def api_scandal_post(scandal_id):
 def options_get(realm):
     if realm in option_tables:
         cursor = db_cursor()
+
         if realm in option_tables_with_parents:
-            # display only children of requested parent
+            # specify parent (integer)
             cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(realm), (request.query.parent,))
         elif realm in option_tables_may_be_human:
-            # display only options for human OR non-human
+            # specify human (boolean)
             cursor.execute("SELECT id, name FROM {0} WHERE for_human = %s".format(realm), (request.query.human,))
         else:
-            # just dump all of them
             cursor.execute("SELECT id, name FROM {0}".format(realm))
+
         options = [ row for row in cursor.fetchall() ]
         return js.dumps(options)
     else:
@@ -129,16 +126,17 @@ def options_get(realm):
     if realm in option_tables:
         conn = psql.connect(conn_string)
         cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+
         if realm in option_tables_with_parents:
-            # save with the requested parent
+            # specify parent (integer)
             cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.parent, request.forms.name))
         elif realm in option_tables_may_be_human:
-            # save for humans/non-humans
+            # specify human (boolean)
             cursor.execute("INSERT INTO {0} (for_human, name) VALUES (%s, %s) RETURNING id".format(realm,), (request.forms.human, request.forms.name))
         else:
-            # it does not need a parent, it'll live
             cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm,), (request.forms.name))
-        # info = {'id': *new_row_id*}
+
+        # returning {'id': *new_row_id*}
         info = cursor.fetchone()
         conn.commit()
         return info
