@@ -488,10 +488,9 @@ function initDone() {
             /* hide init label */
             $("#status-line").hide();
         });
-    } else {
+    }
     /* just hide the label */
     $("#status-line").hide();
-    }
 
     /* button handlers */
 
