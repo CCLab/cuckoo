@@ -5,6 +5,7 @@ from bottle import route, run, template, static_file, request, abort
 import simplejson as js
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
+from datetime import datetime, timedelta
 
 conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
 
@@ -104,10 +105,35 @@ def api_scandal_post(scandal_id):
             "message": "Data stored."
         }
 
-    conn.commit()
+        # here we have to delete all events
+        # links between actors and events will be automatically deleted
+        # (ON DELETE CASCADE constraint)
+        # actors will not be deleted
 
-    # TODO: parse me some events
-    # keep event_ids in hidden form inputs
+        cursor.execute("DELETE FROM events WHERE scandal_id = %s", (scandal_id,))
+
+    # TODO: we could process each and every one of the events
+    # keeping the ids in hidden inputs
+    # for now we'll just clean event data for the scandal
+    # and add new events
+
+    for event in data["events"]:
+        # We need to add a day to the returning dates because of
+        # some strange behaviour of the jQuery datepicker.
+        if event["event_date"] is not None:
+            dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
+            event["event_date"] = dt.strftime("%Y-%m-%d")
+        if event["publication_date"] is not None:
+            dt = datetime.strptime(event["publication_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
+            event["publication_date"] = dt.strftime("%Y-%m-%d")
+
+        # First, we need to insert the event
+        cursor.execute("INSERT INTO events (description, scandal_id, location_id, event_date, publication_date, type_id, subtype_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id", (event["description"], scandal_id, event["location_id"], event["event_date"], event["publication_date"], event["type_id"], event["subtype_id"]))
+        event_id = cursor.fetchone()["id"]
+        # Then, we insert into actors_events
+        cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id) VALUES (%s, %s, %s, %s, %s)", (event["actor_id"], event_id, event["actor_role_id"], event["actor_type_id"], event["actor_affiliation_id"]))
+
+    conn.commit()
 
     return js.dumps(response)
 

@@ -196,7 +196,6 @@ function add_event_form(event_dict) {
 
     /* fill with data from event_dict */
     if(typeof(event_dict) !== "undefined") {
-        console.log(event_dict);
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
         $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
         $("#event-" + event_counter + "-type").val( event_dict.type_id ).change();
@@ -268,6 +267,7 @@ function add_option_popup(link, option_realm) {
                         $("#scandal_type").append(Mustache.render(tpl_select_option, el));
                         $("#scandal_type").val(data.id);
                     } else if(request["realm"] === "scandal_subtypes") {
+                        // TODO: append to cuckoo
                         $("#scandal_subtype").append(Mustache.render(tpl_select_option, el));
                         $("#scandal_subtype").val(data.id);
                     } else if(request["realm"] === "scandal_consequences") {
@@ -454,9 +454,28 @@ function initDone() {
         // $("#datepicker-"+i).datepicker("getDate")
         //console.log($("#event-1-time").datepicker("getDate"));
 
+        scandal["events"] = new Array;
+        $("#events li.event").each(function(index, value) {
+            var description = $(this).children('[id$="-description"]').val();
+            if(description !== "") {
+                scandal["events"].push({
+                    "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
+                    "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
+                    "type_id": ($(this).children('[id$="-type"]').val() === "0") ? null : parseInt($(this).children('[id$="-type"]').val()),
+                    "subtype_id": ($(this).children('[id$="-subtype"]').val() === "0") ? null : parseInt($(this).children('[id$="-subtype"]').val()),
+                    "description": description,
+                    "publication_date": $(this).children('[id$="-publication_date"]').datepicker("getDate"),
+                    "actor_id": ($(this).children("fieldset").children('[id$="-actor"]').val() === "0") ? null : parseInt($(this).children("fieldset").children('[id$="-actor"]').val()),
+                    "actor_type_id": ($(this).children("fieldset").children('[id$="-actor_type"]').val() === "0") ? null : parseInt($(this).children("fieldset").children('[id$="-actor_type"]').val()),
+                    "actor_role_id": ($(this).children("fieldset").children('[id$="-actor_role"]').val() === "0") ? null : parseInt($(this).children("fieldset").children('[id$="-actor_role"]').val()),
+                    "actor_affiliation_id": ($(this).children("fieldset").children('[id$="-actor_affiliation"]').val() === "0") ? null : parseInt($(this).children("fieldset").children('[id$="-actor_affiliation"]').val())
+                });
+            }
+        });
+
         var post_url = (scandal_id === null) ? "/api/scandal/new" : "/api/scandal/" + scandal_id;
         $.post(post_url, {"payload": JSON.stringify(scandal)}, function(data) {
-            $("#dialog").dialog({ autoOpen: false, title: data.message }).html( data.message ).dialog("open");
+            $("#dialog").dialog({ autoOpen: false, title: "Afera zapisana" }).html( "Afera została zapisana w bazie." ).dialog("open");
 
             /* set scandal_id on in case of new scandal */
             if(typeof(data.id) !== "undefined") {
