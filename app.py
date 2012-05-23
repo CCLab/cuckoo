@@ -18,10 +18,12 @@ option_tables = [
     "locations",
     "actor_types",
     "actor_roles",
-    "actor_affiliations"
+    "actor_affiliations",
+    "actors"
 ]
 option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
-option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations"]
+option_tables_with_children = ["scandal_types", "event_types"]
+option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "actors"]
 
 def db_cursor():
     # TODO: deal with conn.commit() somehow
@@ -68,7 +70,14 @@ def api_scandal_get(scandal_id):
     # fetch events for that scandal
     cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s", (scandal_id,))
     events = cursor.fetchall()
+
     # TODO: mill through events, find actors and their attributes
+    for event in events:
+        event["event_date"] = None if event["event_date"] == None else event["event_date"].strftime("%Y-%m-%d")
+        event["publication_date"] = None if event["publication_date"] == None else event["publication_date"].strftime("%Y-%m-%d")
+        cursor.execute("SELECT actor_id, type_id as actor_type_id, role_id as actor_role_id, affiliation_id as actor_affiliation_id FROM actors_events WHERE event_id = %s", (event["id"],))
+        event.update(cursor.fetchone())
+
     scandal["events"] = events
 
     return js.dumps(scandal)
@@ -112,11 +121,23 @@ def options_get(realm):
             cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(realm), (request.query.parent,))
         elif realm in option_tables_may_be_human:
             # specify human (boolean)
-            cursor.execute("SELECT id, name FROM {0} WHERE for_human = %s".format(realm), (request.query.human,))
+            cursor.execute("SELECT id, name FROM {0} WHERE human = %s".format(realm), (request.query.human,))
         else:
             cursor.execute("SELECT id, name FROM {0}".format(realm))
 
         options = [ row for row in cursor.fetchall() ]
+
+        # display children for scandal_types, event_types
+        if realm in option_tables_with_children:
+            if realm == "scandal_types":
+                children_table = "scandal_subtypes"
+            elif realm == "event_types":
+                children_table = "event_subtypes"
+
+            for t in options:
+                cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(children_table), (t["id"],))
+                t["children"] = [ row for row in cursor.fetchall() ]
+
         return js.dumps(options)
     else:
         abort(404, "Bad options endpoint: {0}.".format(realm))
@@ -132,7 +153,7 @@ def options_get(realm):
             cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
         elif realm in option_tables_may_be_human:
             # specify human (boolean)
-            cursor.execute("INSERT INTO {0} (for_human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
+            cursor.execute("INSERT INTO {0} (human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
         else:
             cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm), (request.forms.name,))
 
