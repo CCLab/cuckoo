@@ -309,7 +309,7 @@ function add_option_popup(link, option_realm) {
                         $("#event-" + id + "-location").append(Mustache.render(tpl_select_option, el));
                         $("#event-" + id + "-location").val(data.id);
                     } else if(request["realm"] === "event_types") {
-                        cuckoo.event_types.push(el);
+                        cuckoo.event_types.push({"id": el.id, "name": el.name, "children": []});
                         $("#event-" + id + "-type").append(Mustache.render(tpl_select_option, el));
                         $("#event-" + id + "-type").val(data.id);
                     } else if(request["realm"] === "event_subtypes") {
