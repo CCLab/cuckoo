@@ -7,7 +7,8 @@ import psycopg2 as psql
 import psycopg2.extras as psqlextras
 from datetime import datetime, timedelta
 
-conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
+#conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
+conn_string = "dbname='kuku' user='kuku' host='127.0.0.1' password='ohvie1aGah0ophaiQuaefaoHae2ra9io'"
 
 # some database structure description
 option_tables = [
