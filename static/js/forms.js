@@ -11,7 +11,7 @@ cuckoo.actor_affiliations = {};
 var scandal_id = null;
 var event_counter = 1;
 
-var init_counter = 4;
+var init_counter = 12;
 
 // HACK for subtype loading
 var subtype_id = null;
@@ -88,11 +88,13 @@ function add_event_form(event_dict) {
     /* bind change event to actor_human radio button */
     $("#event-" + event_counter + "-actor_human_no").change(function() {
         // load non-human
-        alert("ch");
+        var id = $(this).parents("li").data('id');
+        alert("ch" + id);
     });
     $("#event-" + event_counter + "-actor_human_yes").change(function() {
         // load human
-        alert("ange");
+        var id = $(this).parents("li").data('id');
+        alert("ange" + id);
     });
     
     /* fill with data from event_dict */
@@ -144,7 +146,23 @@ function add_option_popup(link, option_realm) {
                 if(request["realm"] === "scandal_subtypes") params["parent"] = $("#scandal_type").val();
 
                 $.post("/options/" + request["realm"], params, function(data) {
-                    alert(data.id);
+                    var request = $("#dialog").data("request");
+                    var el = {
+                        "id": data.id,
+                        "name": $("#dialog_option").val()
+                    }
+                    if(request["realm"] === "scandal_types") {
+                        // TODO: append to cuckoo
+                        $("#scandal_type").append(Mustache.render(tpl_select_option, el));
+                        $("#scandal_type").val(data.id);
+                    } else if(request["realm"] === "scandal_subtypes") {
+                        $("#scandal_subtype").append(Mustache.render(tpl_select_option, el));
+                        $("#scandal_subtype").val(data.id);
+                    } else if(request["realm"] === "scandal_consequences") {
+                        // TODO: append to cuckoo
+                        $("#scandal_consequences_btn").before(Mustache.render(tpl_consequence, el));
+                    }
+
                     $("#dialog").html("Element dodany.");
                 }, "json");
             }
@@ -193,6 +211,7 @@ function init() {
 
     /* scandal_consequences */
     $.getJSON("/options/scandal_consequences", function(data) {
+        cuckoo.scandal_consequences = data;
         $.each(data, function(index, value) {
             $("#scandal_consequences_btn").before(Mustache.render(tpl_consequence, value));
         });
@@ -208,6 +227,46 @@ function init() {
     /* event_types */
     $.getJSON("/options/event_types", function(data) {
         cuckoo.event_types = data;
+        initCount();
+    });
+
+    /* actors */
+    $.getJSON("/options/actors", {"human": 1}, function(data) {
+        cuckoo.actors[1] = data;
+        initCount();
+    });
+    $.getJSON("/options/actors", {"human": 0}, function(data) {
+        cuckoo.actors[0] = data;
+        initCount();
+    });
+
+    /* actor_types */
+    $.getJSON("/options/actor_types", {"human": 1}, function(data) {
+        cuckoo.actor_types[1] = data;
+        initCount();
+    });
+    $.getJSON("/options/actor_types", {"human": 0}, function(data) {
+        cuckoo.actor_types[0] = data;
+        initCount();
+    });
+
+    /* actor_roles */
+    $.getJSON("/options/actor_roles", {"human": 1}, function(data) {
+        cuckoo.actor_roles[1] = data;
+        initCount();
+    });
+    $.getJSON("/options/actor_roles", {"human": 0}, function(data) {
+        cuckoo.actor_roles[0] = data;
+        initCount();
+    });
+
+    /* actor_affiliations */
+    $.getJSON("/options/actor_affiliations", {"human": 1}, function(data) {
+        cuckoo.actor_affiliations[1] = data;
+        initCount();
+    });
+    $.getJSON("/options/actor_affiliations", {"human": 0}, function(data) {
+        cuckoo.actor_affiliations[0] = data;
         initCount();
     });
 }
@@ -250,6 +309,9 @@ function initDone() {
             // TODO: load me some events
 
             add_event_form();
+
+            /* hide init label */
+            $("#status-line").hide();
         });
     }
 

@@ -13,6 +13,7 @@
 </head>
 <body>
     <section>
+        <div id="status-line">Inicjalizacja</div>
         <div id="dialog"></div>
         <form action="/add-scandal" method="post" id="form-scandal">
             <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />

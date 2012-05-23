@@ -86,3 +86,13 @@ header, section, footer {
 form select {
     /*min-width: 300px;*/
 }
+
+#status-line {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 0.25em 0.5em;
+    color: #fff;
+    font-weight: bold;
+    background-color: #c43;
+}
