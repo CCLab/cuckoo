@@ -64,10 +64,10 @@ def api_scandal_get(scandal_id):
     # add id to the mix
     scandal["id"] = scandal_id
     # mill through consequences
-    if scandal["consequences"] == None or scanda["consequences"] == "":
-        scandal["consequences"] = []
-    else:
+    try:
         scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
+    except ValueError:
+        scandal["consequences"] = []
 
     # fetch events for that scandal
     cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s ORDER BY event_date ASC", (scandal_id,))
