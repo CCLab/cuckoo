@@ -68,7 +68,7 @@ def api_scandal_get(scandal_id):
         scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
 
     # fetch events for that scandal
-    cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s", (scandal_id,))
+    cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s ORDER BY event_date ASC", (scandal_id,))
     events = cursor.fetchall()
 
     # TODO: mill through events, find actors and their attributes
