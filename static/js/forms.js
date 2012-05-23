@@ -29,7 +29,7 @@ var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" va
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
     + '{{{select_locations}}}'
-    + ' <a href="#" onclick="add_option_popup(this, \'locations\')" class="button-small">+</a>'
+    + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
     + '<br>Data wydarzenia'
     + '<br><div id="event-{{id}}-event_date"></div>'
     + '<br>{{{select_types}}}'
