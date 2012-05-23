@@ -10,6 +10,7 @@ cuckoo.actor_affiliations = {};
 
 var scandal_id = null;
 var event_counter = 1;
+var event_id = null;
 
 var init_counter = 12;
 
@@ -54,6 +55,22 @@ var select_stub = {
 
 /* helper functions */
 
+function get_subtypes(tree, parent_id) {
+    for(var i=0; i<tree.length; i++) {
+        if(tree[i].id == parent_id)
+            return tree[i].children;
+    }
+}
+
+function find_if_human(actor_id) {
+    var found = false;
+    for(var i=0; i<cuckoo.actors[1].length; i++) {
+        if(cuckoo.actors[1][i].id == actor_id)
+            found = true;
+    }
+    return found;
+}
+
 function add_event_form(event_dict) {
     form_dict = { "id": event_counter };
 
@@ -87,19 +104,114 @@ function add_event_form(event_dict) {
 
     /* bind change event to actor_human radio button */
     $("#event-" + event_counter + "-actor_human_no").change(function() {
-        // load non-human
-        var id = $(this).parents("li").data('id');
-        alert("ch" + id);
+        /* reset all actor controls */
+        $("#event-" + event_counter + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+
+        var id = $(this).parents("li").data("id");
+
+        // HACK for event id passing
+        event_id = id;
+        // end HACK
+
+        /* reset actors */
+        $.each(cuckoo.actors[0], function(index, value) {
+            $("#event-" + event_id + "-actor").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor").removeAttr("disabled");
+
+        /* reset actor_types */
+        $.each(cuckoo.actor_types[0], function(index, value) {
+            $("#event-" + event_id + "-actor_type").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_type").removeAttr("disabled");
+
+        /* reset actor_roles */
+        $.each(cuckoo.actor_roles[0], function(index, value) {
+            $("#event-" + event_id + "-actor_role").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_role").removeAttr("disabled");
+
+        /* reset actor_affiliations */
+        $.each(cuckoo.actor_affiliations[0], function(index, value) {
+            $("#event-" + event_id + "-actor_affiliation").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_affiliation").removeAttr("disabled");
     });
     $("#event-" + event_counter + "-actor_human_yes").change(function() {
-        // load human
-        var id = $(this).parents("li").data('id');
-        alert("ange" + id);
+        /* reset all actor controls */
+        $("#event-" + event_counter + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + event_counter + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+
+        var id = $(this).parents("li").data("id");
+
+        // HACK for event id passing
+        event_id = id;
+        // end HACK
+
+        /* reset actors */
+        $.each(cuckoo.actors[1], function(index, value) {
+            $("#event-" + event_id + "-actor").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor").removeAttr("disabled");
+
+        /* reset actor_types */
+        $.each(cuckoo.actor_types[1], function(index, value) {
+            $("#event-" + event_id + "-actor_type").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_type").removeAttr("disabled");
+
+        /* reset actor_roles */
+        $.each(cuckoo.actor_roles[1], function(index, value) {
+            $("#event-" + event_id + "-actor_role").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_role").removeAttr("disabled");
+
+        /* reset actor_affiliations */
+        $.each(cuckoo.actor_affiliations[1], function(index, value) {
+            $("#event-" + event_id + "-actor_affiliation").append(Mustache.render(tpl_select_option, value));
+        });
+        $("#event-" + id + "-actor_affiliation").removeAttr("disabled");
     });
-    
+
+    /* bind change event to event type */
+    $("#event-" + event_counter + "-type").change(function() {
+        var id = $(this).parents("li").data("id");
+        /* disable and clear subtype list */
+        $("#event-" + id + "-subtype").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+
+        /* determine current scandal type */
+        var parent_id = $("#event-" + id + "-type").val();
+        $.each(get_subtypes(cuckoo.event_types, parent_id), function(index, value) {
+            $("#event-" + id + "-subtype").append(Mustache.render(tpl_select_option, value));
+        });
+
+        /* enable subtype list */
+        $("#event-" + id + "-subtype").removeAttr("disabled");
+    });
+
     /* fill with data from event_dict */
     if(typeof(event_dict) !== "undefined") {
         console.log(event_dict);
+        $("#event-" + event_counter + "-location").val( event_dict.location_id );
+        $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
+        $("#event-" + event_counter + "-type").val( event_dict.type_id ).change();
+        $("#event-" + event_counter + "-subtype").val( event_dict.subtype_id );
+        $("#event-" + event_counter + "-description").val( event_dict.description );
+        $("#event-" + event_counter + "-publication_date").datepicker("setDate", event_dict.publication_date);
+        if(find_if_human(event_dict.actor_id)) {
+            $("#event-" + event_counter + "-actor_human_yes").attr("checked", "checked").change();
+        } else {
+            $("#event-" + event_counter + "-actor_human_no").attr("checked", "checked").change();
+        }
+        $("#event-" + event_counter + "-actor").val( event_dict.actor_id );
+        $("#event-" + event_counter + "-actor_type").val( event_dict.actor_type_id );
+        $("#event-" + event_counter + "-actor_role").val( event_dict.actor_role_id );
+        $("#event-" + event_counter + "-actor_affiliation").val( event_dict.actor_affiliation_id );
     }
 
     /* increment event counter */
@@ -273,13 +385,10 @@ function init() {
 
 function initCount() {
     init_counter--;
-    console.log("something init completed, counter: " + init_counter);
     if(!init_counter) initDone();
 }
 
 function initDone() {
-    console.log("init done!");
-
     /* which scandal are we talking about, again? */
     var path = window.location.pathname.split("/");
     var scandal_str = parseInt(path[path.length-1]);
@@ -308,7 +417,14 @@ function initDone() {
             
             // TODO: load me some events
 
-            add_event_form();
+            if(data.events.length === 0) {
+                add_event_form();
+            } else {
+                /* load event data */
+                $.each(data.events, function(index, value) {
+                    add_event_form(value);
+                });
+            }
 
             /* hide init label */
             $("#status-line").hide();
