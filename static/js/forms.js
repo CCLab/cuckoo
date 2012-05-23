@@ -296,7 +296,7 @@ function add_option_popup(link, option_realm) {
                     if(request["realm"] === "scandal_types") {
                         // TODO: append to cuckoo
                         $("#scandal_type").append(Mustache.render(tpl_select_option, el));
-                        $("#scandal_type").val(data.id);
+                        $("#scandal_type").val(data.id).change();
                     } else if(request["realm"] === "scandal_subtypes") {
                         // TODO: append to cuckoo
                         $("#scandal_subtype").append(Mustache.render(tpl_select_option, el));
