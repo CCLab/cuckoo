@@ -64,7 +64,7 @@ def api_scandal_get(scandal_id):
     # add id to the mix
     scandal["id"] = scandal_id
     # mill through consequences
-    if scandal["consequences"] == None:
+    if scandal["consequences"] == None or scanda["consequences"] == "":
         scandal["consequences"] = []
     else:
         scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
