@@ -23,14 +23,14 @@
             <br><label for="scandal_type">Typ</label> <select id="scandal_type">
                 <option value="0">(brak)</option>
             </select>
-                <a href="javascript:add_option_popup(this, 'scandal_types')" id="scandal_type_btn" class="button-small">+</a>
+            <input type="button" onclick="add_option_popup(this, 'scandal_types')" class="button-small" value="+">
             <br><label for="scandal_subtype">Podtyp</label> <select id="scandal_subtype" disabled="disabled">
                 <option value="0">(brak)</option>
             </select>
-            <a href="javascript:add_option_popup(this, 'scandal_subtypes')" id="scandal_subtype_btn" class="button-small">+</a>
+            <input type="button" onclick="add_option_popup(this, 'scandal_subtypes')" class="button-small" value="+">
             <fieldset id="scandal_consequences">
                 <legend>Szersze konsekwencje</legend>
-                <a href="javascript:add_option_popup(this, 'scandal_consequences');" id="scandal_consequences_btn" class="button separate">Dodaj konsekwencję</a>
+                <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="Dodaj konsekwencję">
             </fieldset>
 
             <h2>Wydarzenia</h2>

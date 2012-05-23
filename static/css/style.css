@@ -77,7 +77,7 @@ header, section, footer {
 .event-list li {
     padding: 1em;
 }
-.event-list li > a {
+.event-list #btn-add-event a {
     display: block;
     border: none;
     color: #333;

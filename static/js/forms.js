@@ -10,12 +10,14 @@ cuckoo.actor_affiliations = {};
 
 var scandal_id = null;
 var event_counter = 1;
-var event_id = null;
-
 var init_counter = 12;
 
 // HACK for subtype loading
 var subtype_id = null;
+// end HACK
+
+// HACK for event id passing
+var event_id = null;
 // end HACK
 
 /* mustache templates */
@@ -27,10 +29,13 @@ var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" va
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
     + '{{{select_locations}}}'
+    + ' <a href="#" onclick="add_option_popup(this, \'locations\')" class="button-small">+</a>'
     + '<br>Data wydarzenia'
     + '<br><div id="event-{{id}}-event_date"></div>'
     + '<br>{{{select_types}}}'
+    + ' <input type="button" onclick="add_option_popup(this, \'event_types\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-subtype">Podtyp</label> <select id="event-{{id}}-subtype"></select>'
+    + ' <input type="button" onclick="add_option_popup(this, \'event_subtypes\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-description">Opis</label>'
     + '<br><textarea id="event-{{id}}-description" rows="8" cols="50"></textarea>'
     + '<br>Data publikacji'
@@ -39,9 +44,13 @@ var tpl_event_form = '<li class="event">'
     + '<input type="radio" name="event-{{id}}-actor_human" id="event-{{id}}-actor_human_no" value="0"> <label for="event-{{id}}-actor_human_no">instytucja</label>'
     + '<input type="radio" name="event-{{id}}-actor_human" id="event-{{id}}-actor_human_yes" value="1"> <label for="event-{{id}}-actor_human_yes">osoba</label>'
     + '<br><label for="event-{{id}}-actor">Nazwa</label> <select id="event-{{id}}-actor"></select>'
+    + ' <input type="button" onclick="add_option_popup(this, \'actors\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-actor_type">Typ</label> <select id="event-{{id}}-actor_type"></select>'
+    + ' <input type="button" onclick="add_option_popup(this, \'actor_types\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-actor_role">Rola</label> <select id="event-{{id}}-actor_role"></select>'
+    + ' <input type="button" onclick="add_option_popup(this, \'actor_roles\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-actor_affiliation">Afiliacja</label> <select id="event-{{id}}-actor_affiliation"></select>'
+    + ' <input type="button" onclick="add_option_popup(this, \'actor_affiliations\')" class="button-small" value="+">'
     + '</fieldset>'
     + '</li>';
 var select_stub = {
@@ -59,6 +68,15 @@ function get_subtypes(tree, parent_id) {
     for(var i=0; i<tree.length; i++) {
         if(tree[i].id == parent_id)
             return tree[i].children;
+    }
+}
+
+function insert_subtype(tree, parent_id, el) {
+    for(var i=0; i<tree.length; i++) {
+        if(tree[i].id == parent_id) {
+            tree[i].children.push(el);
+            break;
+        }
     }
 }
 
@@ -104,11 +122,13 @@ function add_event_form(event_dict) {
 
     /* bind change event to actor_human radio button */
     $("#event-" + event_counter + "-actor_human_no").change(function() {
+        var id = $(this).parents("li").data('id');
+
         /* reset all actor controls */
-        $("#event-" + event_counter + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
         var id = $(this).parents("li").data("id");
 
@@ -141,11 +161,13 @@ function add_event_form(event_dict) {
         $("#event-" + id + "-actor_affiliation").removeAttr("disabled");
     });
     $("#event-" + event_counter + "-actor_human_yes").change(function() {
+        var id = $(this).parents("li").data('id');
+
         /* reset all actor controls */
-        $("#event-" + event_counter + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        $("#event-" + event_counter + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+        $("#event-" + id + "-actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
         var id = $(this).parents("li").data("id");
 
@@ -249,12 +271,21 @@ function add_option_popup(link, option_realm) {
         buttons: {
             "Dodaj": function() {
                 var request = $(this).data("request");
-
-                $(request["caller"]).css('background-color', '#f00');
+                var id = $(request["caller"]).parents("li").data('id');
 
                 var params = {};
                 params["name"] = $("#dialog_option").val();
                 if(request["realm"] === "scandal_subtypes") params["parent"] = $("#scandal_type").val();
+                else if(request["realm"] === "event_subtypes") params["parent"] = $("#event-" + id + "-type").val();
+                else if(request["realm"] === "actors" || request["realm"] === "actor_types" || request["realm"] === "actor_roles" || request["realm"] === "actor_affiliations") {
+                    if($("#event-" + id + "-actor_human_yes").attr("checked") === "checked") {
+                        params["human"] = 1;
+                        var human = 1;
+                    } else {
+                        params["human"] = 0;
+                        var human = 0;
+                    }
+                }
 
                 $.post("/options/" + request["realm"], params, function(data) {
                     var request = $("#dialog").data("request");
@@ -273,6 +304,34 @@ function add_option_popup(link, option_realm) {
                     } else if(request["realm"] === "scandal_consequences") {
                         // TODO: append to cuckoo
                         $("#scandal_consequences_btn").before(Mustache.render(tpl_consequence, el));
+                    } else if(request["realm"] === "locations") {
+                        cuckoo.locations.push(el);
+                        $("#event-" + id + "-location").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-location").val(data.id);
+                    } else if(request["realm"] === "event_types") {
+                        cuckoo.event_types.push(el);
+                        $("#event-" + id + "-type").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-type").val(data.id);
+                    } else if(request["realm"] === "event_subtypes") {
+                        insert_subtype(cuckoo.event_types, $("#event-" + id + "-type").val(), el);
+                        $("#event-" + id + "-subtype").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-subtype").val(data.id);
+                    } else if(request["realm"] === "actors") {
+                        cuckoo.actors[human].push(el);
+                        $("#event-" + id + "-actor").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-actor").val(data.id);
+                    } else if(request["realm"] === "actor_types") {
+                        cuckoo.actor_types[human].push(el);
+                        $("#event-" + id + "-actor_type").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-actor_type").val(data.id);
+                    } else if(request["realm"] === "actor_roles") {
+                        cuckoo.actor_roles[human].push(el);
+                        $("#event-" + id + "-actor_role").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-actor_role").val(data.id);
+                    } else if(request["realm"] === "actor_affiliations") {
+                        cuckoo.actor_affiliations[human].push(el);
+                        $("#event-" + id + "-actor_affiliation").append(Mustache.render(tpl_select_option, el));
+                        $("#event-" + id + "-actor_affiliation").val(data.id);
                     }
 
                     $("#dialog").html("Element dodany.");
@@ -475,7 +534,7 @@ function initDone() {
 
         var post_url = (scandal_id === null) ? "/api/scandal/new" : "/api/scandal/" + scandal_id;
         $.post(post_url, {"payload": JSON.stringify(scandal)}, function(data) {
-            $("#dialog").dialog({ autoOpen: false, title: "Afera zapisana" }).html( "Afera została zapisana w bazie." ).dialog("open");
+            $("#dialog").dialog({ autoOpen: false, title: "Afera zapisana", buttons: {} }).html( "Afera została zapisana w bazie." ).dialog("open");
 
             /* set scandal_id on in case of new scandal */
             if(typeof(data.id) !== "undefined") {
