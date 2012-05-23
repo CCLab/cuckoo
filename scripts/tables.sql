@@ -1,7 +1,7 @@
 CREATE TABLE actor_affiliations (
     id integer NOT NULL,
     name character varying(64),
-    for_human boolean
+    human boolean
 );
 
 CREATE SEQUENCE actor_affiliations_id_seq
@@ -16,7 +16,7 @@ ALTER SEQUENCE actor_affiliations_id_seq OWNED BY actor_affiliations.id;
 CREATE TABLE actor_roles (
     id integer NOT NULL,
     name character varying(64),
-    for_human boolean
+    human boolean
 );
 
 CREATE SEQUENCE actor_roles_id_seq
@@ -31,7 +31,7 @@ ALTER SEQUENCE actor_roles_id_seq OWNED BY actor_roles.id;
 CREATE TABLE actor_types (
     id integer NOT NULL,
     name character varying(64),
-    for_human boolean
+    human boolean
 );
 
 CREATE SEQUENCE actor_types_id_seq
@@ -46,7 +46,7 @@ ALTER SEQUENCE actor_types_id_seq OWNED BY actor_types.id;
 CREATE TABLE actors (
     id integer NOT NULL,
     name character varying(64),
-    is_human boolean
+    human boolean
 );
 
 CREATE TABLE actors_events (
@@ -262,7 +262,7 @@ ALTER TABLE ONLY actors_events
     ADD CONSTRAINT actors_events_affiliations FOREIGN KEY (affiliation_id) REFERENCES actor_affiliations(id);
 
 ALTER TABLE ONLY actors_events
-    ADD CONSTRAINT actors_events_events FOREIGN KEY (event_id) REFERENCES events(id);
+    ADD CONSTRAINT actors_events_events FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY actors_events
     ADD CONSTRAINT actors_events_roles FOREIGN KEY (role_id) REFERENCES actor_roles(id);
