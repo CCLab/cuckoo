@@ -334,7 +334,7 @@ function add_option_popup(link, option_realm) {
                         $("#event-" + id + "-actor_affiliation").val(data.id);
                     }
 
-                    $("#dialog").html("Element dodany.");
+                    $("#dialog").dialog("close");
                 }, "json");
             }
         }
