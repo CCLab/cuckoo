@@ -16,8 +16,10 @@
         <div id="status-line">Inicjalizacja</div>
         <div id="dialog"></div>
         <form action="/add-scandal" method="post" id="form-scandal">
-            <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
-            <input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+            <div id="toolbar">
+                <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
+                <input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+            </div>
 
             <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
             <br><label for="scandal_type">Typ</label> <select id="scandal_type">
