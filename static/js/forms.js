@@ -69,6 +69,7 @@ function get_subtypes(tree, parent_id) {
         if(tree[i].id == parent_id)
             return tree[i].children;
     }
+    return [];
 }
 
 function insert_subtype(tree, parent_id, el) {
@@ -311,7 +312,7 @@ function add_option_popup(link, option_realm) {
                     } else if(request["realm"] === "event_types") {
                         cuckoo.event_types.push({"id": el.id, "name": el.name, "children": []});
                         $("#event-" + id + "-type").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-type").val(data.id);
+                        $("#event-" + id + "-type").val(data.id).change();
                     } else if(request["realm"] === "event_subtypes") {
                         insert_subtype(cuckoo.event_types, $("#event-" + id + "-type").val(), el);
                         $("#event-" + id + "-subtype").append(Mustache.render(tpl_select_option, el));
