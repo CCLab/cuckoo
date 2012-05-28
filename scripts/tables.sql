@@ -50,7 +50,7 @@ CREATE TABLE actors (
 );
 
 CREATE TABLE actors_events (
-    actor_id integer,
+    actor_id integer NOT NULL,
     event_id integer NOT NULL,
     role_id integer,
     type_id integer,
@@ -224,7 +224,7 @@ ALTER TABLE ONLY actor_types
     ADD CONSTRAINT actor_types_pk PRIMARY KEY (id);
 
 ALTER TABLE ONLY actors_events
-    ADD CONSTRAINT actors_events_pk PRIMARY KEY (event_id);
+    ADD CONSTRAINT actors_events_pk PRIMARY KEY (actor_id, event_id);
 
 ALTER TABLE ONLY actors
     ADD CONSTRAINT actors_id_pk PRIMARY KEY (id);
