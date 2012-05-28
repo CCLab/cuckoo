@@ -274,13 +274,15 @@ function add_option_popup(link, option_realm) {
             "Dodaj": function() {
                 var request = $(this).data("request");
                 var id = $(request["caller"]).parents("li").data('id');
+                
+                var actor_form = $(request["caller"]).parents(".actor");
 
                 var params = {};
                 params["name"] = $("#dialog_option").val();
                 if(request["realm"] === "scandal_subtypes") params["parent"] = $("#scandal_type").val();
                 else if(request["realm"] === "event_subtypes") params["parent"] = $("#event-" + id + "-type").val();
                 else if(request["realm"] === "actors" || request["realm"] === "actor_types" || request["realm"] === "actor_roles" || request["realm"] === "actor_affiliations") {
-                    if($("#event-" + id + "-actor_human_yes").attr("checked") === "checked") {
+                    if(actor_form.children('input[type="radio"][value="1"]').attr("checked") === "checked") {
                         params["human"] = 1;
                         var human = 1;
                     } else {
@@ -320,20 +322,20 @@ function add_option_popup(link, option_realm) {
                         $("#event-" + id + "-subtype").val(data.id);
                     } else if(request["realm"] === "actors") {
                         cuckoo.actors[human].push(el);
-                        $("#event-" + id + "-actor").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-actor").val(data.id);
+                        actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, el));
+                        actor_form.children(".actor_name").val(data.id);
                     } else if(request["realm"] === "actor_types") {
                         cuckoo.actor_types[human].push(el);
-                        $("#event-" + id + "-actor_type").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-actor_type").val(data.id);
+                        actor_form.children(".actor_type").append(Mustache.render(tpl_select_option, el));
+                        actor_form.children(".actor_type").val(data.id);
                     } else if(request["realm"] === "actor_roles") {
                         cuckoo.actor_roles[human].push(el);
-                        $("#event-" + id + "-actor_role").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-actor_role").val(data.id);
+                        actor_form.children(".actor_role").append(Mustache.render(tpl_select_option, el));
+                        actor_form.children(".actor_role").val(data.id);
                     } else if(request["realm"] === "actor_affiliations") {
                         cuckoo.actor_affiliations[human].push(el);
-                        $("#event-" + id + "-actor_affiliation").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-actor_affiliation").val(data.id);
+                        actor_form.children(".actor_affiliation").append(Mustache.render(tpl_select_option, el));
+                        actor_form.children(".actor_affiliation").val(data.id);
                     }
 
                     $("#dialog").dialog("close");
