@@ -77,8 +77,8 @@ def api_scandal_get(scandal_id):
     for event in events:
         event["event_date"] = None if event["event_date"] == None else event["event_date"].strftime("%Y-%m-%d")
         event["publication_date"] = None if event["publication_date"] == None else event["publication_date"].strftime("%Y-%m-%d")
-        cursor.execute("SELECT actor_id, type_id as actor_type_id, role_id as actor_role_id, affiliation_id as actor_affiliation_id FROM actors_events WHERE event_id = %s", (event["id"],))
-        event.update(cursor.fetchone())
+        cursor.execute("SELECT actor_id as id, type_id, role_id, affiliation_id FROM actors_events WHERE event_id = %s", (event["id"],))
+        event["actors"] = [ row for row in cursor.fetchall() ]
 
     scandal["events"] = events
 
@@ -132,7 +132,8 @@ def api_scandal_post(scandal_id):
         cursor.execute("INSERT INTO events (description, scandal_id, location_id, event_date, publication_date, type_id, subtype_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id", (event["description"], scandal_id, event["location_id"], event["event_date"], event["publication_date"], event["type_id"], event["subtype_id"]))
         event_id = cursor.fetchone()["id"]
         # Then, we insert into actors_events
-        cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id) VALUES (%s, %s, %s, %s, %s)", (event["actor_id"], event_id, event["actor_role_id"], event["actor_type_id"], event["actor_affiliation_id"]))
+        for actor in event["actors"]:
+            cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id) VALUES (%s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"]))
 
     conn.commit()
 

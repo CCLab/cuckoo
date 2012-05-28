@@ -38,7 +38,7 @@
             <h2>Wydarzenia</h2>
             <ul class="boxed-list event-list" id="events">
                 <!-- thou shalt load forms dynamically -->
-                <li id="btn-add-event"><a href="#">Dodaj wydarzenie</a></li>
+                <li id="btn-add-event"><a href="javascript:add_event_form()">Dodaj wydarzenie</a></li>
             </ul>
         </form>
     </section>
