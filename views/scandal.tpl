@@ -18,7 +18,7 @@
         <form action="/add-scandal" method="post" id="form-scandal">
             <div id="toolbar">
                 <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
-                <input type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+                <input class="flat-button" type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
             </div>
 
             <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
@@ -32,13 +32,13 @@
             <input type="button" onclick="add_option_popup(this, 'scandal_subtypes')" class="button-small" value="+">
             <fieldset id="scandal_consequences">
                 <legend>Szersze konsekwencje</legend>
-                <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="Dodaj konsekwencję">
+                <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="+">
             </fieldset>
 
             <h2>Wydarzenia</h2>
             <ul class="boxed-list event-list" id="events">
                 <!-- thou shalt load forms dynamically -->
-                <li id="btn-add-event"><a href="javascript:add_event_form()">Dodaj wydarzenie</a></li>
+                <li id="btn-add-event"><input class="flat-button" type="button" onclick="add_event_form()" value="Dodaj wydarzenie"></li>
             </ul>
         </form>
     </section>

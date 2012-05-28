@@ -41,8 +41,8 @@ var tpl_event_form = '<li class="event">'
     + '<br>Data publikacji'
     + '<br><div id="event-{{id}}-publication_date"></div>'
     + '<h3>Aktorzy</h3>'
-    + '<ul class="actors">'
-    + '<li class="btn-add-actor"><input type="button" onclick="add_actor_form(this)" value="Dodaj aktora"></li>'
+    + '<ul class="actors boxed-list">'
+    + '<li class="btn-add-actor"><input class="flat-button" type="button" onclick="add_actor_form(this)" value="Dodaj aktora"></li>'
     + '</ul>'
     + '</li>';
 /* TODO: actor form accessablility (add label for and input id attributes) */
