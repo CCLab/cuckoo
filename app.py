@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bottle import route, run, template, static_file, request, abort
+from bottle import route, get, post, run, template, static_file, request, abort
 import simplejson as js
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
@@ -71,7 +71,7 @@ def scandal_show(scandal_id):
 
     return template("scandal", template_dict)
 
-# TODO split editing and showing the scandal (POST/GET)
+# new in url for bottle routing bug walkaround
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
@@ -102,9 +102,9 @@ def api_scandal_get(scandal_id):
 
     # TODO: mill through events, find actors and their attributes
     for event in events:
-        event['event_date'] = None if not event['event_date']
+        event['event_date'] = None if not event['event_date']\
                                    else   event["event_date"].strftime("%Y-%m-%d")
-        event["publication_date"] = None if not event["publication_date"]
+        event["publication_date"] = None if not event["publication_date"]\
                                          else event["publication_date"].strftime("%Y-%m-%d")
 
         query = '''SELECT actor_id as id, type_id, role_id, affiliation_id
@@ -119,7 +119,7 @@ def api_scandal_get(scandal_id):
 
     return js.dumps(scandal)
 
-@route('/api/scandal/<scandal_id:re:new|\d+>', method='POST')
+@post('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_post(scandal_id):
     data = js.loads(request.forms.payload)
     data["consequences"] = ",".join([ str(el) for el in data['consequences'] ])
