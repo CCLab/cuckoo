@@ -71,28 +71,48 @@ def scandal_show(scandal_id):
 
     return template("scandal", template_dict)
 
-@route('/api/scandal/<scandal_id:re:new|\d+>', method='GET')
+# TODO split editing and showing the scandal (POST/GET)
+@get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    cursor.execute("SELECT name, description, type_id, subtype_id, consequences FROM scandals WHERE id = %s", (scandal_id,))
+    query = '''SELECT name, description, type_id, subtype_id, consequences
+               FROM scandals
+               WHERE id = %s
+            ''' % scandal_id
+    cursor.execute( query )
+
     scandal = cursor.fetchone()
     # add id to the mix
     scandal["id"] = scandal_id
     # mill through consequences
-    if scandal["consequences"] == "" or scandal["consequences"] == None:
+    # TODO move consequences in postgres into array
+    try:
+        scandal["consequences"] = [ int(c) for c in scandal['consequences'].split(",") ]
+    except:
         scandal["consequences"] = []
-    else:
-        scandal["consequences"] = [ int(c) for c in scandal["consequences"].split(",") ]
 
     # fetch events for that scandal
-    cursor.execute("SELECT id, description, location_id, event_date, publication_date, type_id, subtype_id FROM events WHERE scandal_id = %s ORDER BY event_date ASC", (scandal_id,))
+    query = '''SELECT id, description, location_id, event_date,
+                      publication_date, type_id, subtype_id
+               FROM events
+               WHERE scandal_id = %s ORDER BY event_date ASC
+            ''' % scandal_id
+    cursor.execute( query )
     events = cursor.fetchall()
 
     # TODO: mill through events, find actors and their attributes
     for event in events:
-        event["event_date"] = None if event["event_date"] == None else event["event_date"].strftime("%Y-%m-%d")
-        event["publication_date"] = None if event["publication_date"] == None else event["publication_date"].strftime("%Y-%m-%d")
-        cursor.execute("SELECT actor_id as id, type_id, role_id, affiliation_id FROM actors_events WHERE event_id = %s", (event["id"],))
+        event['event_date'] = None if not event['event_date']
+                                   else   event["event_date"].strftime("%Y-%m-%d")
+        event["publication_date"] = None if not event["publication_date"]
+                                         else event["publication_date"].strftime("%Y-%m-%d")
+
+        query = '''SELECT actor_id as id, type_id, role_id, affiliation_id
+                   FROM actors_events
+                   WHERE event_id = %s
+                ''' % event['id']
+
+        cursor.execute( query )
         event["actors"] = [ row for row in cursor.fetchall() ]
 
     scandal["events"] = events
