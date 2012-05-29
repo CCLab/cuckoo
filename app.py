@@ -6,9 +6,24 @@ import simplejson as js
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
 from datetime import datetime, timedelta
+from ConfigParser import ConfigParser
 
-#conn_string = "dbname='cuckoo' user='postgres' host='localhost' password='EmooroK4'"
-conn_string = "dbname='kuku' user='kuku' host='127.0.0.1' password='ohvie1aGah0ophaiQuaefaoHae2ra9io'"
+# read database connection settings
+cfg = ConfigParser()
+cfg.read('./db.conf')
+
+host   = cfg.get( 'postgres', 'host' )
+dbname = cfg.get( 'postgres', 'dbname' )
+user   = cfg.get( 'postgres', 'user' )
+try:
+    password = cfg.get( 'postgres', 'password' )
+except:
+    password = None
+
+conn_string = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
+if password:
+    conn_string += " password='"+ password +"'"
+
 
 # some database structure description
 option_tables = [
