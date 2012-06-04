@@ -549,12 +549,14 @@ function initDone() {
 
         var post_url = (scandal_id === null) ? "/api/scandal/new" : "/api/scandal/" + scandal_id;
         $.post(post_url, {"payload": JSON.stringify(scandal)}, function(data) {
+            /*
             $("#dialog").dialog({ autoOpen: false, title: "Afera zapisana", buttons: {} }).html( "Afera została zapisana w bazie." ).dialog("open");
 
-            /* set scandal_id on in case of new scandal */
             if(typeof(data.id) !== "undefined") {
                 scandal_id = data.id;
             }
+            */
+            window.location.href = "/";
         }, "json");
 
         return false;
