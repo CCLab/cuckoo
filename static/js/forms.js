@@ -343,6 +343,7 @@ function add_option_popup(link, option_realm) {
             }
         }
         }).html('<input type="text" id="dialog_option">');
+        $("#dialog_option").focus();
 }
 
 function init() {
