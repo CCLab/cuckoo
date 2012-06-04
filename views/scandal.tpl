@@ -18,7 +18,10 @@
         <form action="/add-scandal" method="post" id="form-scandal">
             <div id="toolbar">
                 <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
-                <input class="flat-button" type="submit" value="{{save}}" /> <a href="/">{{cancel}}</a>
+                <span class="buttons">
+                    <input class="flat-button" type="submit" value="{{save}}" />
+                    <a href="/">{{cancel}}</a>
+                </span>
             </div>
 
             <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
