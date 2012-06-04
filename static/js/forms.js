@@ -343,7 +343,12 @@ function add_option_popup(link, option_realm) {
             }
         }
         }).html('<input type="text" id="dialog_option">');
-        $("#dialog_option").focus();
+
+        $("#dialog_option").keyup(function(event){
+            if(event.keyCode == 13){
+                $(".ui-dialog .ui-dialog-buttonset button").click();
+            }
+        }).focus();
 }
 
 function init() {
