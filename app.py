@@ -101,6 +101,7 @@ def api_scandal_get(scandal_id):
     events = cursor.fetchall()
 
     # TODO: mill through events, find actors and their attributes
+    # TODO: check and operator instead of ifs
     for event in events:
         event['event_date'] = None if not event['event_date']\
                                    else   event["event_date"].strftime("%Y-%m-%d")
