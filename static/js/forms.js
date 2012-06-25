@@ -499,8 +499,11 @@ function initDone() {
             $("#status-line").hide();
         });
     }
-    /* just hide the label */
-    $("#status-line").hide();
+    else
+    {
+        /* hide init label */
+        $("#status-line").hide();
+    }
 
     /* form handlers */
 
