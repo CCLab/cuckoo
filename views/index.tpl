@@ -12,10 +12,14 @@
     </header>
     <section>
         <ul class="boxed-list scandal-list">
+            <li>
+                <ul>
+                    <li><a href="/scandal/new"><strong>{{add_scandal}}</strong></a></li>
+                </ul>
+            </li>
 %for scandal in scandals:
             <li><a href="/scandal/{{scandal['id']}}"><strong>{{scandal['name']}}</strong>: {{scandal['description']}}</a></li>
 %end
-            <li><a href="/scandal/new"><strong>{{add_scandal}}</strong></a></li>
         </ul>
         
     </section>
