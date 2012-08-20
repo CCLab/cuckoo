@@ -182,12 +182,12 @@ def options_get(realm):
 
         if realm in option_tables_with_parents:
             # specify parent (integer)
-            cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(realm), (request.query.parent,))
+            cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s ORDER BY id".format(realm), (request.query.parent,))
         elif realm in option_tables_may_be_human:
             # specify human (boolean)
-            cursor.execute("SELECT id, name FROM {0} WHERE human = %s".format(realm), (request.query.human,))
+            cursor.execute("SELECT id, name FROM {0} WHERE human = %s ORDER BY id".format(realm), (request.query.human,))
         else:
-            cursor.execute("SELECT id, name FROM {0}".format(realm))
+            cursor.execute("SELECT id, name FROM {0} ORDER BY id".format(realm))
 
         options = [ row for row in cursor.fetchall() ]
 
@@ -199,7 +199,7 @@ def options_get(realm):
                 children_table = "event_subtypes"
 
             for t in options:
-                cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s".format(children_table), (t["id"],))
+                cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s ORDER BY id".format(children_table), (t["id"],))
                 t["children"] = [ row for row in cursor.fetchall() ]
 
         return js.dumps(options)
