@@ -25,6 +25,7 @@ var event_id = null;
 var tpl_select_option = '<option value="{{id}}">{{name}}</option>';
 var tpl_select = '<label for="{{id}}">{{name}}</label>'
    + ' <select id="{{id}}"><option value="0">(brak)</option>{{#items}}{{{option}}}{{/items}}</select>';
+var tpl_input_text = '<input type="text" value="{{value}}">';
 var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" value="{{id}}"><label for="scandal_consequence-{{id}}">{{name}}</label>';
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
@@ -93,6 +94,14 @@ function find_if_human(actor_id) {
             found = true;
     }
     return found;
+}
+
+function add_scandal_name_field(name) {
+    tpl_data = {};
+    if(typeof(name) !== "undefined") {
+        tpl_data["value"] = name;
+    }
+    $("#toolbar .scandal_names #add_scandal_name").before(Mustache.render(tpl_input_text, tpl_data));
 }
 
 function add_event_form(event_dict) {
@@ -482,7 +491,9 @@ function initDone() {
     /* if id was given, load me some scandal data */
     if(scandal_id !== null) {
         $.getJSON("/api/scandal/"+scandal_id, function(data) {
-            $("#scandal_name").val(data.name);
+            for(i=0; i<data.name.length; i++) {
+                add_scandal_name_field(data.name[i]);
+            }
             $("#scandal_description").val(data.description);
             $("#scandal_type").val(data.type_id).change();
 
@@ -519,17 +530,26 @@ function initDone() {
     {
         /* hide init label */
         $("#status-line").hide();
+
+        /* add one scandal name field */
+        add_scandal_name_field();
     }
 
     /* form handlers */
 
     $("#form-scandal").submit(function() {
         var scandal = {
-            "name": $("#scandal_name").val(),
             "description": $("#scandal_description").val(),
             "type_id": ($("#scandal_type").val() === "0") ? null : parseInt($("#scandal_type").val()),
             "subtype_id": ($("#scandal_subtype").val() === "0") ? null : parseInt($("#scandal_subtype").val())
         };
+
+        scandal["name"] = new Array();
+        $('#toolbar .scandal_names input[type="text"]').each(function(index, value) {
+            if($(this).val() !== "") {
+                scandal["name"].push($(this).val());
+            }
+        });
 
         scandal["consequences"] = new Array();
         $("#scandal_consequences input:checkbox:checked").each(function(index, value) {

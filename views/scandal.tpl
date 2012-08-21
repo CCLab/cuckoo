@@ -11,17 +11,20 @@
     <script src="/static/js/mustache.js"></script>
     <script src="/static/js/forms.js"></script>
 </head>
-<body>
+<body class="scandal-form">
     <section>
         <div id="status-line">Inicjalizacja</div>
         <div id="dialog"></div>
         <form action="/add-scandal" method="post" id="form-scandal">
             <div id="toolbar">
-                <label for="scandal_name">Nazwa</label> <input type="text" id="scandal_name" />
+                <span class="label-scandal_names">Nazwa</span>
                 <span class="buttons">
                     <input class="flat-button" type="submit" value="{{save}}" />
                     <a href="/">{{cancel}}</a>
                 </span>
+                <div class="scandal_names">
+                    <input type="button" value="+" id="add_scandal_name" onclick="add_scandal_name_field()" class="button-small">
+                </div>
             </div>
 
             <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>

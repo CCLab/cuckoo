@@ -48,7 +48,7 @@ def db_cursor():
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
-@route('/')
+@get('/')
 def index():
     template_dict = {
         "title": "Afery",
@@ -57,7 +57,10 @@ def index():
 
     cursor = db_cursor()
     cursor.execute("SELECT id, name, description FROM scandals")
-    template_dict['scandals'] = [ row for row in cursor.fetchall()]
+    template_dict['scandals'] = [ {'id': row['id'],\
+        'name': ' / '.join(row['name']),\
+        'description': row['description']}\
+        for row in cursor.fetchall()]
 
     return template("index", template_dict)
 

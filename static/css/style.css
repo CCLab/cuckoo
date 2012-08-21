@@ -1,9 +1,13 @@
 body {
-    padding-top: 1.5em;
     font-family: 'Pontano Sans', sans-serif;
     font-size: small;
     color: #333;
     background-color: #ddd;
+}
+
+body.scandal-form {
+    /* for testing */
+    padding-top: 6em;
 }
 
 a {
@@ -22,15 +26,18 @@ header, section, footer {
     margin: 2em;
 }
 
-#toolbar {
+body.scandal-form #toolbar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    padding: 1em 2.5em;
+    padding: 1em 2.5em 0.75em 2.5em;
     background-color: #eee;
     z-index: 100;
     border-bottom: 1px solid #ccc;
+    -moz-box-shadow:    0 0 6px 0 #666;
+    -webkit-box-shadow: 0 0 6px 0 #666;
+    box-shadow:         0 0 6px 0 #666;
 }
 
 .flat-button {
@@ -41,18 +48,37 @@ header, section, footer {
     -webkit-border-radius: 2px;
 }
 
-#toolbar input[type="text"] {
-    min-width: 450px;
-    margin: 0 0.5em;
+#toolbar .buttons {
+    float: right;
+    text-align: right;
+}
+#toolbar .label-scandal_names {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 5em;
+    padding-top: 1em;
+    padding-left: 2.5em;
+}
+#toolbar .scandal_names {
+    position: relative;
+    top: -0.25em;
+    padding-left: 5em;
+    width: 67%;
+    min-height: 24px;
+}
+#toolbar .scandal_names input[type="text"] {
+    width: 95%;
+    margin: 0.25em 0 0 0;
     border: 1px solid #ccc;
     border-radius: 2px;
     -moz-border-radius: 2px;
     -webkit-border-radius: 2px;
 }
-
-#toolbar .buttons {
-    float: right;
-    text-align: right;
+#toolbar .scandal_names input[type="button"] {
+    position: absolute;
+    right: 0;
+    bottom: 0;
 }
 
 .button {
