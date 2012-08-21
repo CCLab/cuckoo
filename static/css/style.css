@@ -20,6 +20,13 @@ fieldset {
 header, section, footer {
     margin: 2em;
 }
+body.index header {
+    margin-bottom: 0;
+    z-index: 100;
+}
+body.index section {
+    margin-top: 0;
+}
 
 body.scandal-form #toolbar {
     position: fixed;
@@ -113,12 +120,12 @@ body.scandal-form #toolbar {
 .boxed-list {
     padding: 0;
     list-style-type: none;
-    border-right: 1px solid rgba(0,0,0,0.2);
     border-bottom: 1px solid rgba(0,0,0,0.2);
     background-color: rgba(255,255,255,0.333);
 }
 .boxed-list > li {
     border-left: 1px solid rgba(0,0,0,0.2);
+    border-right: 1px solid rgba(0,0,0,0.2);
     border-top: 1px solid rgba(0,0,0,0.2);
 }
 
@@ -127,6 +134,36 @@ body.scandal-form #toolbar {
     padding: 1em;
     border: none;
     color: #333;
+}
+
+.navbar {
+    padding-left: 0;
+    list-style-type: none;
+    text-align: right;
+}
+.navbar li {
+    display: inline-block;
+}
+.navbar li a {
+    padding: 0.5em 0.75em;
+    margin-left: 0.5em;
+    color: #fff;
+    color: rgba(255,255,255,0.8);
+    font-size: 90%;
+    text-transform: uppercase;
+    background-color: rgb(64,192,64);
+    border-radius: 6px 6px 0 0;
+    -moz-border-radius: 4px 4px 0 0;
+    -webkit-border-radius: 4px 4px 0 0;
+}
+.navbar li a:hover {
+    color: #fff;
+}
+.navbar-parent {
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    background-color: #ddd !important;
 }
 
 .event-list li {
