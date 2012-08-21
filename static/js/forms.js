@@ -38,7 +38,7 @@ var tpl_event_form = '<li class="event">'
     + ' <input type="button" onclick="add_option_popup(this, \'event_subtypes\')" class="button-small" value="+">'
     + '<br><label for="event-{{id}}-description">Opis</label>'
     + '<br><textarea id="event-{{id}}-description" rows="8" cols="50"></textarea>'
-    + '<br>Data publikacji'
+    + '<br><input type="checkbox" id="event-{{id}}-publication_date_flag"> <label for="event-{{id}}-publication_date_flag">Data publikacji</label>'
     + '<br><div id="event-{{id}}-publication_date"></div>'
     + '<h3>Aktorzy</h3>'
     + '<ul class="actors boxed-list">'
@@ -138,6 +138,16 @@ function add_event_form(event_dict) {
         $("#event-" + id + "-subtype").removeAttr("disabled");
     });
 
+    /* bind change event to publication date flag */
+    $("#event-" + event_counter + "-publication_date_flag").change(function() {
+        var id = $(this).parents("li").data("id");
+        if($(this).is(":checked")) {
+            $("#event-" + id + "-publication_date").show();
+        } else {
+            $("#event-" + id + "-publication_date").hide();
+        }
+    });
+
     /* fill with data from event_dict */
     if(typeof(event_dict) !== "undefined") {
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
@@ -145,6 +155,12 @@ function add_event_form(event_dict) {
         $("#event-" + event_counter + "-type").val( event_dict.type_id ).change();
         $("#event-" + event_counter + "-subtype").val( event_dict.subtype_id );
         $("#event-" + event_counter + "-description").val( event_dict.description );
+
+        if(event_dict.publication_date === null) {
+            $("#event-" + event_counter + "-publication_date_flag").removeAttr("checked").change();
+        } else {
+            $("#event-" + event_counter + "-publication_date_flag").attr("checked", "checked").change();
+        }
         $("#event-" + event_counter + "-publication_date").datepicker("setDate", event_dict.publication_date);
 
         var link = $("#event-" + event_counter + "-type").parent().find(".btn-add-actor > input");
@@ -537,6 +553,12 @@ function initDone() {
                     "publication_date": $(this).children('[id$="-publication_date"]').datepicker("getDate"),
                     "actors": []
                 };
+                if(!$(this).children('[id$="-publication_date_flag"]').is(":checked"))
+                {
+                    event_dict.publication_date = null;
+                }
+                console.log(event_dict.publication_date);
+
                 $(this).children(".actors").children(".actor").each(function(index, value) {
                     event_dict["actors"].push({
                         "id": ($(value).children(".actor_name").val() === "0" ? null : $(value).children(".actor_name").val()),
