@@ -15,7 +15,7 @@
             <li class="navbar-parent">
                 <ul class="navbar">
                     <li><a href="/scandal/new"><strong>{{add_scandal}}</strong></a></li><!--
-                    --><li><a href="/scandal/new"><strong>{{add_scandal}}</strong></a></li>
+                    --><!-- new items here to avoid spaces between <li/> -->
                 </ul>
             </li>
 %for scandal in scandals:
