@@ -27,7 +27,7 @@
                 </div>
             </div>
 
-            <br><label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
+            <label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
             <br><label for="scandal_type">Typ</label> <select id="scandal_type">
                 <option value="0">(brak)</option>
             </select>

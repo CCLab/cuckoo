@@ -102,6 +102,7 @@ function add_scandal_name_field(name) {
         tpl_data["value"] = name;
     }
     $("#toolbar .scandal_names #add_scandal_name").before(Mustache.render(tpl_input_text, tpl_data));
+    $("body.scandal-form").css("padding-top", $("#toolbar").outerHeight());
 }
 
 function add_event_form(event_dict) {

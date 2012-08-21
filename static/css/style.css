@@ -5,11 +5,6 @@ body {
     background-color: #ddd;
 }
 
-body.scandal-form {
-    /* for testing */
-    padding-top: 6em;
-}
-
 a {
     text-decoration: none;
     border-bottom: 1px dotted #00f;
