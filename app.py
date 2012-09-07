@@ -78,7 +78,7 @@ def scandal_show(scandal_id):
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    query = '''SELECT name, description, type_id, subtype_id, consequences
+    query = '''SELECT name, description, type_id, subtype_id, consequences, tags
                FROM scandals
                WHERE id = %s
             ''' % scandal_id
@@ -111,7 +111,7 @@ def api_scandal_get(scandal_id):
         event["publication_date"] = None if not event["publication_date"]\
                                          else event["publication_date"].strftime("%Y-%m-%d")
 
-        query = '''SELECT actor_id as id, type_id, role_id, affiliation_id
+        query = '''SELECT actor_id as id, type_id, role_id, affiliation_id, tags
                    FROM actors_events
                    WHERE event_id = %s
                 ''' % event['id']
@@ -131,8 +131,9 @@ def api_scandal_post(scandal_id):
     conn = psql.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
+    data["tags"] = [ tag.strip() for tag in data["tags"] ]
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"]))
+        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], data["tags"]))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
@@ -140,7 +141,7 @@ def api_scandal_post(scandal_id):
         }
     else:
         scandal_id = int(scandal_id)
-        cursor.execute("UPDATE scandals SET name = %s, description = %s, type_id = %s, subtype_id = %s, consequences = %s WHERE id = %s", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], scandal_id))
+        cursor.execute("UPDATE scandals SET name = %s, description = %s, type_id = %s, subtype_id = %s, consequences = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], data["tags"], scandal_id))
         response = {
             "message": "Data stored."
         }
@@ -172,7 +173,8 @@ def api_scandal_post(scandal_id):
         event_id = cursor.fetchone()["id"]
         # Then, we insert into actors_events
         for actor in event["actors"]:
-            cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id) VALUES (%s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"]))
+            actor["tags"] = [ tag.strip() for tag in actor["tags"] ]
+            cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"], actor["tags"]))
 
     conn.commit()
 

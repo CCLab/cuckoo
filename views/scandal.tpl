@@ -40,6 +40,7 @@
                 <legend>Szersze konsekwencje</legend>
                 <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="+">
             </fieldset>
+            <label for="scandal_tags">Tagi (oddzielone średnikiem)</label> <input type="text" id="scandal_tags" />
 
             <h2>Wydarzenia</h2>
             <ul class="boxed-list event-list" id="events">

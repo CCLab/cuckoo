@@ -181,6 +181,10 @@ body.scandal-form #toolbar {
     margin-left: 1em;
 }
 
+#scandal_tags, .actor_tags {
+    min-width: 450px;
+}
+
 #status-line {
     position: fixed;
     top: 0;

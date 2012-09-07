@@ -54,7 +54,8 @@ CREATE TABLE actors_events (
     event_id integer NOT NULL,
     role_id integer,
     type_id integer,
-    affiliation_id integer
+    affiliation_id integer,
+    tags character varying(128)[]
 );
 
 CREATE SEQUENCE actors_id_seq
@@ -178,7 +179,8 @@ CREATE TABLE scandals (
     type_id integer,
     id integer NOT NULL,
     subtype_id integer,
-    consequences character varying(64)
+    consequences character varying(64),
+    tags character varying(128)[]
 );
 
 CREATE SEQUENCE scandals_id_seq

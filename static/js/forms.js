@@ -58,6 +58,7 @@ var tpl_actor_form = '<li class="actor">'
     + ' <input type="button" onclick="add_option_popup(this, \'actor_roles\')" class="button-small" value="+">'
     + '<br><label>Afiliacja</label> <select class="actor_affiliation"></select>'
     + ' <input type="button" onclick="add_option_popup(this, \'actor_affiliations\')" class="button-small" value="+">'
+    + '<br><label>Tagi (oddzielone średnikiem)</label> <input type="text" class="actor_tags">'
     + '</li>';
 var select_stub = {
     "items": [],
@@ -192,6 +193,24 @@ function add_actor_form(link, actor_dict) {
     actor_form.children(".actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
     actor_form.children(".actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
+    /* bind change event to actor_affiliation to create a new tag */
+    actor_form.children('.actor_affiliation').change(function() {
+        if(actor_form.children('.actor_tags').val() === "") {
+            var human = 0;
+            if(actor_form.children('input[type="radio"][value="1"]').attr("checked") === "checked") { 
+                human = 1;
+            }
+
+            var affs = cuckoo.actor_affiliations[human];
+            var aff_id = actor_form.children('.actor_affiliation').val();
+            for(var i = 0; i < affs.length; i++) {
+                if(affs[i]['id'] == aff_id) {
+                    actor_form.children('.actor_tags').val(affs[i]['name']);
+                }
+            }
+        }
+    });
+
     /* bind change event to actor_human radio button */
     actor_form.children('input[type="radio"][value="0"]').change(function() {
         // HACK for lack of input radio name
@@ -263,6 +282,9 @@ function add_actor_form(link, actor_dict) {
         actor_form.children(".actor_type").val(actor_dict.type_id);
         actor_form.children(".actor_role").val(actor_dict.role_id);
         actor_form.children(".actor_affiliation").val(actor_dict.affiliation_id);
+        if(actor_dict.tags !== null) {
+            actor_form.children(".actor_tags").val(actor_dict.tags.join("; "));
+        }
     }
 }
 
@@ -497,6 +519,9 @@ function initDone() {
             }
             $("#scandal_description").val(data.description);
             $("#scandal_type").val(data.type_id).change();
+            if(data.tags !== null) {
+                $("#scandal_tags").val(data.tags.join("; "));
+            }
 
             // FIXME: do subtype loading properly
             // This does not work, as it tries to set subtype
@@ -542,7 +567,8 @@ function initDone() {
         var scandal = {
             "description": $("#scandal_description").val(),
             "type_id": ($("#scandal_type").val() === "0") ? null : parseInt($("#scandal_type").val()),
-            "subtype_id": ($("#scandal_subtype").val() === "0") ? null : parseInt($("#scandal_subtype").val())
+            "subtype_id": ($("#scandal_subtype").val() === "0") ? null : parseInt($("#scandal_subtype").val()),
+            "tags": $("#scandal_tags").val().split(";")
         };
 
         scandal["name"] = new Array();
@@ -586,7 +612,8 @@ function initDone() {
                         "type_id": ($(value).children(".actor_type").val() === "0" ? null : $(value).children(".actor_type").val()),
                         "role_id": ($(value).children(".actor_role").val() === "0" ? null : $(value).children(".actor_role").val()),
 
-                        "affiliation_id": ($(value).children(".actor_affiliation").val() === "0" ? null : $(value).children(".actor_affiliation").val())
+                        "affiliation_id": ($(value).children(".actor_affiliation").val() === "0" ? null : $(value).children(".actor_affiliation").val()),
+                        "tags": $(value).children(".actor_tags").val().split(";")
                     });
                 });
                 scandal["events"].push(event_dict);
