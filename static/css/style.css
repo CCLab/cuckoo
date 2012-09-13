@@ -195,3 +195,7 @@ body.scandal-form #toolbar {
     background-color: #c43;
     z-index: 150;
 }
+
+#scandal_type_tree a {
+    border-bottom: none;
+}

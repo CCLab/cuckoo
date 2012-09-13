@@ -5,9 +5,12 @@
     <title>Scandal form</title>
     <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
     <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui-1.8.18.custom.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/ui.dynatree.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/ui.dynatree.custom.css" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Pontano+Sans&subset=latin,latin-ext">
     <script src="/static/js/jquery-1.7.1.min.js"></script>
     <script src="/static/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script src="/static/js/jquery.dynatree.min.js"></script>
     <script src="/static/js/mustache.js"></script>
     <script src="/static/js/forms.js"></script>
 </head>
@@ -28,14 +31,7 @@
             </div>
 
             <label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
-            <br><label for="scandal_type">Typ</label> <select id="scandal_type">
-                <option value="0">(brak)</option>
-            </select>
-            <input type="button" onclick="add_option_popup(this, 'scandal_types')" class="button-small" value="+">
-            <br><label for="scandal_subtype">Podtyp</label> <select id="scandal_subtype" disabled="disabled">
-                <option value="0">(brak)</option>
-            </select>
-            <input type="button" onclick="add_option_popup(this, 'scandal_subtypes')" class="button-small" value="+">
+            <br><div id="scandal_type_tree"></div>
             <fieldset id="scandal_consequences">
                 <legend>Szersze konsekwencje</legend>
                 <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="+">

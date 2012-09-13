@@ -161,7 +161,8 @@ ALTER SEQUENCE scandal_subtypes_id_seq OWNED BY scandal_subtypes.id;
 
 CREATE TABLE scandal_types (
     name character varying(128),
-    id integer NOT NULL
+    id integer NOT NULL,
+    parent integer
 );
 
 CREATE SEQUENCE scandal_types_id_seq
@@ -174,13 +175,14 @@ CREATE SEQUENCE scandal_types_id_seq
 ALTER SEQUENCE scandal_types_id_seq OWNED BY scandal_types.id;
 
 CREATE TABLE scandals (
-    name character varying(128),
+    name character varying(128)[],
     description text,
     type_id integer,
     id integer NOT NULL,
     subtype_id integer,
     consequences character varying(64),
-    tags character varying(128)[]
+    tags character varying(128)[],
+    types integer[]
 );
 
 CREATE SEQUENCE scandals_id_seq
@@ -251,6 +253,9 @@ ALTER TABLE ONLY scandal_subtypes
 
 ALTER TABLE ONLY scandal_types
     ADD CONSTRAINT scandal_types_id_pk PRIMARY KEY (id);
+
+ALTER TABLE ONLY scandal_types
+    ADD CONSTRAINT scandal_types_parent FOREIGN KEY (parent) REFERENCES scandal_types(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY scandals
     ADD CONSTRAINT scandals_id_pk PRIMARY KEY (id);

@@ -48,6 +48,12 @@ def db_cursor():
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
+def find_children(elements, parent):
+    parent['children'] = [ {'id': e['id'], 'title': e['name'], 'children': []}\
+        for e in elements if e['parent'] == parent['id'] ]
+    for c in parent['children']:
+        find_children(elements, c)
+
 @get('/')
 def index():
     template_dict = {
@@ -78,7 +84,7 @@ def scandal_show(scandal_id):
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    query = '''SELECT name, description, type_id, subtype_id, consequences, tags
+    query = '''SELECT name, description, types, consequences, tags
                FROM scandals
                WHERE id = %s
             ''' % scandal_id
@@ -133,7 +139,7 @@ def api_scandal_post(scandal_id):
 
     data["tags"] = [ tag.strip() for tag in data["tags"] ]
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, type_id, subtype_id, consequences, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], data["tags"]))
+        cursor.execute("INSERT INTO scandals (name, description, types, consequences, tags) VALUES (%s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["consequences"], data["tags"]))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
@@ -141,7 +147,7 @@ def api_scandal_post(scandal_id):
         }
     else:
         scandal_id = int(scandal_id)
-        cursor.execute("UPDATE scandals SET name = %s, description = %s, type_id = %s, subtype_id = %s, consequences = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["type_id"], data["subtype_id"], data["consequences"], data["tags"], scandal_id))
+        cursor.execute("UPDATE scandals SET name = %s, description = %s, types = %s, consequences = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["types"], data["consequences"], data["tags"], scandal_id))
         response = {
             "message": "Data stored."
         }
@@ -180,6 +186,28 @@ def api_scandal_post(scandal_id):
 
     return js.dumps(response)
 
+@get('/api/<realm>')
+def options_get(realm):
+    if realm in option_tables:
+        cursor = db_cursor()
+
+        cursor.execute('SELECT id, name, parent FROM scandal_types')
+        types = cursor.fetchall()
+
+        # let's add top nodes to a tree
+        tree = [ {'id': t['id'], 'title': t['name'], 'children': []}\
+            for t in types if t['parent'] is None ]
+        types = [ t for t in types if t['parent'] is not None ]
+
+        # let's now find children recursively
+        for leaf in tree:
+            find_children(types, leaf)
+
+        return js.dumps(tree)
+
+    else:
+        abort(404, "Bad options endpoint: {0}.".format(realm))
+
 @route('/options/<realm>', method='GET')
 def options_get(realm):
     if realm in option_tables:
@@ -212,7 +240,7 @@ def options_get(realm):
         abort(404, "Bad options endpoint: {0}.".format(realm))
 
 @route('/options/<realm>', method='POST')
-def options_get(realm):
+def options_post(realm):
     if realm in option_tables:
         conn = psql.connect(conn_string)
         cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)

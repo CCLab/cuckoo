@@ -414,7 +414,7 @@ function init() {
         types["id"] = "scandal_type";
         types["name"] = "Typ";
         var select_types = Mustache.render(tpl_select, types);
-        console.log(select_types);*/
+        */
 
         /* set handler to refresh subtypes */
         $("#scandal_type").change(function() {
@@ -429,10 +429,6 @@ function init() {
                 });
                 /* enable subtype list */
                 $("#scandal_subtype").removeAttr("disabled");
-
-                // HACK for subtype loading
-                $("#scandal_subtype").val(subtype_id);
-                // end HACK
             });
         });
         initCount();
@@ -518,20 +514,28 @@ function initDone() {
                 add_scandal_name_field(data.name[i]);
             }
             $("#scandal_description").val(data.description);
-            $("#scandal_type").val(data.type_id).change();
             if(data.tags !== null) {
                 $("#scandal_tags").val(data.tags.join("; "));
             }
-
-            // FIXME: do subtype loading properly
-            // This does not work, as it tries to set subtype
-            // before list is loaded. List loads in event handler,
-            // so that we can't specify callback here.
-            //$("#scandal_subtype").val(data.subtype_id);
-
-            // HACK for subtype setting
-            subtype_id = data.subtype_id;
-            // end HACK
+    
+            $("#scandal_type_tree").dynatree({
+                onActivate: function(node) {
+                    console.log('Node "' + node.data.title + '" (' + node.data.id + ') activated');
+                },
+                onPostInit: function(isReloading, isError) {
+                    // select types
+                    $("#scandal_type_tree").dynatree("getRoot").visit(function(node) {
+                        if($.inArray(node.data.id, data.types) >= 0) {
+                            node.select(true);
+                        }
+                    });
+                },
+                checkbox: true,
+                selectMode: 3,
+                initAjax: {
+                    url: '/api/scandal_types'
+                }
+            });
 
             $.each(data.consequences, function(index, value) {
                 $("#scandal_consequence-"+value).attr("checked", "checked");
@@ -583,9 +587,12 @@ function initDone() {
             scandal["consequences"].push(parseInt($(this).val()));
         });
 
-        // parsing datepickers:
-        // $("#datepicker-"+i).datepicker("getDate")
-        //console.log($("#event-1-time").datepicker("getDate"));
+        scandal["types"] = new Array();
+        $("#scandal_type_tree").dynatree("getRoot").visit(function(node) {
+            if(node.isSelected()) {
+                scandal["types"].push(node.data.id);
+            }
+        });
 
         scandal["events"] = new Array;
         $("#events li.event").each(function(index, value) {
@@ -604,7 +611,6 @@ function initDone() {
                 {
                     event_dict.publication_date = null;
                 }
-                console.log(event_dict.publication_date);
 
                 $(this).children(".actors").children(".actor").each(function(index, value) {
                     event_dict["actors"].push({
