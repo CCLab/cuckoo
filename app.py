@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bottle import route, get, post, run, template, static_file, request, abort
+from bottle import route, get, post, delete, run, template, static_file, request, abort
 import simplejson as js
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
@@ -191,22 +191,90 @@ def options_get(realm):
     if realm in option_tables:
         cursor = db_cursor()
 
-        cursor.execute('SELECT id, name, parent FROM scandal_types')
-        types = cursor.fetchall()
+        if realm in option_tables_with_children:
+            cursor.execute('SELECT id, name, parent FROM {0}'.format(realm))
+            types = cursor.fetchall()
 
-        # let's add top nodes to a tree
-        tree = [ {'id': t['id'], 'title': t['name'], 'children': []}\
-            for t in types if t['parent'] is None ]
-        types = [ t for t in types if t['parent'] is not None ]
+            # add top nodes to a tree
+            tree = [ {'id': t['id'], 'title': t['name'], 'children': []}\
+                for t in types if t['parent'] is None ]
+            types = [ t for t in types if t['parent'] is not None ]
 
-        # let's now find children recursively
-        for leaf in tree:
-            find_children(types, leaf)
+            # now find children recursively
+            for leaf in tree:
+                find_children(types, leaf)
+
+        elif realm in option_tables_may_be_human:
+            # Note: elements in those tables have no children
+            cursor.execute('SELECT id, name FROM {0} WHERE human = %s'.format(realm),\
+                (request.query.human,))
+            types = cursor.fetchall()
+
+            tree = [ {'id': t['id'], 'title': t['name']} for t in types ]
+
+        else:
+            cursor.execute('SELECT id, name FROM {0}'.format(realm))
+            types = cursor.fetchall()
+
+            tree = [ {'id': t['id'], 'title': t['name']} for t in types ]
 
         return js.dumps(tree)
 
     else:
-        abort(404, "Bad options endpoint: {0}.".format(realm))
+        abort(404, "Resource '{0}' does not exist.".format(realm))
+
+@post('/api/<realm>')
+def options_create(realm):
+    if realm in option_tables:
+        conn = psql.connect(conn_string)
+        cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+
+        if realm in option_tables_with_children:
+            # parent (integer) may be specified
+            cursor.execute("INSERT INTO {0} (parent, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
+
+        elif realm in option_tables_may_be_human:
+            # human (boolean) must be specified
+            cursor.execute("INSERT INTO {0} (human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
+
+        else:
+            cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm), (request.forms.name,))
+
+        # returning {'id': *new_row_id*}
+        info = cursor.fetchone()
+        conn.commit()
+        return info
+
+    else:
+        abort(404, "Resource '{0}' does not exist.".format(realm))
+
+@post('/api/<realm>/<id:int>')
+def options_update(realm, id):
+    if realm in option_tables:
+        conn = psql.connect(conn_string)
+        cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+
+        cursor.execute("UPDATE {0} SET name = %s WHERE id = %s".format(realm), (request.forms.name, id))
+
+        conn.commit()
+        return None
+
+    else:
+        abort(404, "Resource '{0}' does not exist.".format(realm))
+
+@delete('/api/<realm>/<id:int>')
+def options_delete(realm, id):
+    if realm in option_tables:
+        conn = psql.connect(conn_string)
+        cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+
+        cursor.execute("DELETE FROM {0} WHERE id = %s".format(realm), (id,))
+
+        conn.commit()
+        return None
+
+    else:
+        abort(404, "Resource '{0}' does not exist.".format(realm))
 
 @route('/options/<realm>', method='GET')
 def options_get(realm):
