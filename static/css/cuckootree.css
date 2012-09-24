@@ -1,0 +1,19 @@
+.cuckootree-parent {
+    padding: 1em;
+    border: 1px solid rgba(0,0,0,0.3);
+}
+
+/* hacks on the dynatree default appearance */
+
+.cuckootree-wrapper .dynatree-container {
+    background: transparent;
+    border: none;
+}
+
+.cuckootree-wrapper .dynatree-icon {
+    display: none;
+}
+
+.cuckootree-wrapper .dynatree-title {
+    border-bottom: none;
+}

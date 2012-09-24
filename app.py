@@ -102,7 +102,7 @@ def api_scandal_get(scandal_id):
 
     # fetch events for that scandal
     query = '''SELECT id, description, location_id, event_date,
-                      publication_date, type_id, subtype_id
+                      publication_date, types
                FROM events
                WHERE scandal_id = %s ORDER BY event_date ASC
             ''' % scandal_id
@@ -175,7 +175,7 @@ def api_scandal_post(scandal_id):
             event["publication_date"] = dt.strftime("%Y-%m-%d")
 
         # First, we need to insert the event
-        cursor.execute("INSERT INTO events (description, scandal_id, location_id, event_date, publication_date, type_id, subtype_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id", (event["description"], scandal_id, event["location_id"], event["event_date"], event["publication_date"], event["type_id"], event["subtype_id"]))
+        cursor.execute("INSERT INTO events (description, scandal_id, location_id, event_date, publication_date, types) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id", (event["description"], scandal_id, event["location_id"], event["event_date"], event["publication_date"], event["types"]))
         event_id = cursor.fetchone()["id"]
         # Then, we insert into actors_events
         for actor in event["actors"]:
@@ -231,7 +231,10 @@ def options_create(realm):
 
         if realm in option_tables_with_children:
             # parent (integer) may be specified
-            cursor.execute("INSERT INTO {0} (parent, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
+            if request.forms.parent:
+                cursor.execute("INSERT INTO {0} (parent, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
+            else:
+                cursor.execute("INSERT INTO {0} (parent, name) VALUES (NULL, %s) RETURNING id".format(realm), (request.forms.name,))
 
         elif realm in option_tables_may_be_human:
             # human (boolean) must be specified

@@ -33,10 +33,8 @@ var tpl_event_form = '<li class="event">'
     + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
     + '<br>Data wydarzenia'
     + '<br><div id="event-{{id}}-event_date"></div>'
-    + '<br>{{{select_types}}}'
-    + ' <input type="button" onclick="add_option_popup(this, \'event_types\')" class="button-small" value="+">'
-    + '<br><label for="event-{{id}}-subtype">Podtyp</label> <select id="event-{{id}}-subtype"></select>'
-    + ' <input type="button" onclick="add_option_popup(this, \'event_subtypes\')" class="button-small" value="+">'
+    + '<br>Typ wydarzenia'
+    + '<br><div id="event-{{id}}-type_tree"></div>'
     + '<br><label for="event-{{id}}-description">Opis</label>'
     + '<br><textarea id="event-{{id}}-description" rows="8" cols="50"></textarea>'
     + '<br><input type="checkbox" id="event-{{id}}-publication_date_flag"> <label for="event-{{id}}-publication_date_flag">Data publikacji</label>'
@@ -115,39 +113,13 @@ function add_event_form(event_dict) {
     locations["name"] = "Lokacja";
     form_dict["select_locations"] = Mustache.render(tpl_select, locations);
 
-    var event_types = $.extend(true, {}, select_stub);
-    event_types["items"] = cuckoo.event_types;
-    event_types["id"] = "event-" + event_counter + "-type";
-    event_types["name"] = "Typ";
-    form_dict["select_types"] = Mustache.render(tpl_select, event_types);
-
     /* add new event form to the bottom, just before the button */
     $("#btn-add-event").before(Mustache.render(tpl_event_form, form_dict));
 
-    $("#event-" + event_counter + "-subtype").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
     /* enable datepicker */
     $("#event-" + event_counter + "-event_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
     $("#event-" + event_counter + "-publication_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
-
-    /* set li id */
-    $("#event-" + event_counter + "-type").parent().data('id', event_counter);
-
-    /* bind change event to event type */
-    $("#event-" + event_counter + "-type").change(function() {
-        var id = $(this).parents("li").data("id");
-        /* disable and clear subtype list */
-        $("#event-" + id + "-subtype").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-
-        /* determine current scandal type */
-        var parent_id = $("#event-" + id + "-type").val();
-        $.each(get_subtypes(cuckoo.event_types, parent_id), function(index, value) {
-            $("#event-" + id + "-subtype").append(Mustache.render(tpl_select_option, value));
-        });
-
-        /* enable subtype list */
-        $("#event-" + id + "-subtype").removeAttr("disabled");
-    });
 
     /* bind change event to publication date flag */
     $("#event-" + event_counter + "-publication_date_flag").change(function() {
@@ -159,12 +131,10 @@ function add_event_form(event_dict) {
         }
     });
 
-    /* fill with data from event_dict */
     if(typeof(event_dict) !== "undefined") {
+        // fill with data from event_dict
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
         $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
-        $("#event-" + event_counter + "-type").val( event_dict.type_id ).change();
-        $("#event-" + event_counter + "-subtype").val( event_dict.subtype_id );
         $("#event-" + event_counter + "-description").val( event_dict.description );
 
         if(event_dict.publication_date === null) {
@@ -174,13 +144,18 @@ function add_event_form(event_dict) {
         }
         $("#event-" + event_counter + "-publication_date").datepicker("setDate", event_dict.publication_date);
 
+        cuckootree.init( $('#event-' + event_counter + '-type_tree'), 'event_types' )
+            .select(event_dict.types).render();
+
         var link = $("#event-" + event_counter + "-type").parent().find(".btn-add-actor > input");
         $.each(event_dict.actors, function(index, value) {
             add_actor_form(link, value);
         });
+    } else {
+        // prepare empty
+        cuckootree.init( $('#event-' + event_counter + '-type_tree'), 'event_types' ).render();
     }
 
-    /* increment event counter */
     event_counter++;
 }
 
@@ -315,7 +290,7 @@ function add_option_popup(link, option_realm) {
     else if(option_realm === "actor_roles")          dialog_title = "Dodaj rolę aktora";
     else if(option_realm === "actor_affiliations")   dialog_title = "Dodaj afiliację aktora";
 
-    /* create out dialog box */
+    /* create dialog box */
     $("#dialog").data("request", request).dialog({
         title: dialog_title,
         buttons: {
@@ -403,34 +378,6 @@ function init() {
     /* scandal_types */
     $.getJSON("/options/scandal_types", function(data) {
         cuckoo.scandal_types = data;
-
-        /* add new options to the list */
-        $.each(data, function(index, value) {
-            $("#scandal_type").append(Mustache.render(tpl_select_option, value));
-        });
-
-        /*var types = $.extend(true, {}, select_stub);
-        types["items"] = cuckoo.scandal_types;
-        types["id"] = "scandal_type";
-        types["name"] = "Typ";
-        var select_types = Mustache.render(tpl_select, types);
-        */
-
-        /* set handler to refresh subtypes */
-        $("#scandal_type").change(function() {
-            /* disable and clear subtype list */
-            $("#scandal_subtype").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-
-            /* determine current scandal type */
-            var type_id = $("#scandal_type").val();
-            $.getJSON("/options/scandal_subtypes", {"parent": type_id}, function(data) {
-                $.each(data, function(index, value) {
-                    $("#scandal_subtype").append(Mustache.render(tpl_select_option, value));
-                });
-                /* enable subtype list */
-                $("#scandal_subtype").removeAttr("disabled");
-            });
-        });
         initCount();
     });
 
@@ -513,36 +460,22 @@ function initDone() {
             for(i=0; i<data.name.length; i++) {
                 add_scandal_name_field(data.name[i]);
             }
+
             $("#scandal_description").val(data.description);
+
             if(data.tags !== null) {
                 $("#scandal_tags").val(data.tags.join("; "));
             }
     
-            $("#scandal_type_tree").dynatree({
-                onActivate: function(node) {
-                    console.log('Node "' + node.data.title + '" (' + node.data.id + ') activated');
-                },
-                onPostInit: function(isReloading, isError) {
-                    // select types
-                    $("#scandal_type_tree").dynatree("getRoot").visit(function(node) {
-                        if($.inArray(node.data.id, data.types) >= 0) {
-                            node.select(true);
-                        }
-                    });
-                },
-                checkbox: true,
-                selectMode: 3,
-                initAjax: {
-                    url: '/api/scandal_types'
-                }
-            });
+            cuckootree.init( $('#scandal_type'), 'scandal_types' )
+                .select(data.types)
+                //.addRequestParam('human', 0)
+                .render();
 
             $.each(data.consequences, function(index, value) {
                 $("#scandal_consequence-"+value).attr("checked", "checked");
             });
             
-            // TODO: load me some events
-
             if(data.events.length === 0) {
                 add_event_form();
             } else {
@@ -587,12 +520,7 @@ function initDone() {
             scandal["consequences"].push(parseInt($(this).val()));
         });
 
-        scandal["types"] = new Array();
-        $("#scandal_type_tree").dynatree("getRoot").visit(function(node) {
-            if(node.isSelected()) {
-                scandal["types"].push(node.data.id);
-            }
-        });
+        scandal["types"] = cuckootree.getSelected( $("#scandal_type") );
 
         scandal["events"] = new Array;
         $("#events li.event").each(function(index, value) {
@@ -601,8 +529,6 @@ function initDone() {
                 var event_dict = {
                     "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
-                    "type_id": ($(this).children('[id$="-type"]').val() === "0") ? null : parseInt($(this).children('[id$="-type"]').val()),
-                    "subtype_id": ($(this).children('[id$="-subtype"]').val() === "0") ? null : parseInt($(this).children('[id$="-subtype"]').val()),
                     "description": description,
                     "publication_date": $(this).children('[id$="-publication_date"]').datepicker("getDate"),
                     "actors": []
@@ -611,6 +537,8 @@ function initDone() {
                 {
                     event_dict.publication_date = null;
                 }
+
+                event_dict["types"] = cuckootree.getSelected( $(this).children('[id$="-type_tree"]') );
 
                 $(this).children(".actors").children(".actor").each(function(index, value) {
                     event_dict["actors"].push({
@@ -622,22 +550,19 @@ function initDone() {
                         "tags": $(value).children(".actor_tags").val().split(";")
                     });
                 });
+
+                // references go in here
+
                 scandal["events"].push(event_dict);
             }
         });
 
         var post_url = (scandal_id === null) ? "/api/scandal/new" : "/api/scandal/" + scandal_id;
         $.post(post_url, {"payload": JSON.stringify(scandal)}, function(data) {
-            /*
-            $("#dialog").dialog({ autoOpen: false, title: "Afera zapisana", buttons: {} }).html( "Afera została zapisana w bazie." ).dialog("open");
-
-            if(typeof(data.id) !== "undefined") {
-                scandal_id = data.id;
-            }
-            */
             window.location.href = "/";
         }, "json");
 
+        // prevent the form from being sent the old-fashioned way
         return false;
     });
 }
