@@ -84,7 +84,8 @@ ALTER SEQUENCE event_subtypes_id_seq OWNED BY event_subtypes.id;
 
 CREATE TABLE event_types (
     id integer NOT NULL,
-    name character varying(128)
+    name character varying(128),
+    parent integer
 );
 
 CREATE SEQUENCE event_types_id_seq
@@ -104,7 +105,8 @@ CREATE TABLE events (
     event_date date,
     publication_date date,
     type_id integer,
-    subtype_id integer
+    subtype_id integer,
+    types integer[]
 );
 
 CREATE SEQUENCE events_id_seq
@@ -175,12 +177,12 @@ CREATE SEQUENCE scandal_types_id_seq
 ALTER SEQUENCE scandal_types_id_seq OWNED BY scandal_types.id;
 
 CREATE TABLE scandals (
-    name character varying(128)[],
     description text,
     type_id integer,
     id integer NOT NULL,
     subtype_id integer,
     consequences character varying(64),
+    name character varying(128)[],
     tags character varying(128)[],
     types integer[]
 );
@@ -254,8 +256,6 @@ ALTER TABLE ONLY scandal_subtypes
 ALTER TABLE ONLY scandal_types
     ADD CONSTRAINT scandal_types_id_pk PRIMARY KEY (id);
 
-ALTER TABLE ONLY scandal_types
-    ADD CONSTRAINT scandal_types_parent FOREIGN KEY (parent) REFERENCES scandal_types(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY scandals
     ADD CONSTRAINT scandals_id_pk PRIMARY KEY (id);
@@ -277,23 +277,15 @@ ALTER TABLE ONLY actors_events
 ALTER TABLE ONLY actors_events
     ADD CONSTRAINT actors_events_types FOREIGN KEY (type_id) REFERENCES actor_types(id);
 
-ALTER TABLE ONLY event_subtypes
-    ADD CONSTRAINT event_subtypes_event_types FOREIGN KEY (parent_id) REFERENCES event_types(id);
 
-ALTER TABLE ONLY events
-    ADD CONSTRAINT events_event_subtypes FOREIGN KEY (subtype_id) REFERENCES event_subtypes(id);
 
-ALTER TABLE ONLY events
-    ADD CONSTRAINT events_event_types FOREIGN KEY (type_id) REFERENCES event_types(id);
+ALTER TABLE ONLY event_types
+    ADD CONSTRAINT event_types_parent FOREIGN KEY (parent) REFERENCES event_types(id) ON DELETE CASCADE;
 
-ALTER TABLE ONLY events
-    ADD CONSTRAINT events_locations FOREIGN KEY (location_id) REFERENCES locations(id);
 
 ALTER TABLE ONLY events
     ADD CONSTRAINT events_scandals FOREIGN KEY (scandal_id) REFERENCES scandals(id);
 
-ALTER TABLE ONLY scandal_subtypes
-    ADD CONSTRAINT scandal_subtypes_scandal_types FOREIGN KEY (parent_id) REFERENCES scandal_types(id);
 
-ALTER TABLE ONLY scandals
-    ADD CONSTRAINT scandals_scandal_types FOREIGN KEY (type_id) REFERENCES scandal_types(id);
+ALTER TABLE ONLY scandal_types
+    ADD CONSTRAINT scandal_types_parent FOREIGN KEY (parent) REFERENCES scandal_types(id) ON DELETE CASCADE;
