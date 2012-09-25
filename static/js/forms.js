@@ -491,11 +491,14 @@ function initDone() {
     }
     else
     {
-        /* hide init label */
+        // hide init label
         $("#status-line").hide();
 
-        /* add one scandal name field */
+        // add one scandal name field
         add_scandal_name_field();
+
+        // add scandal type tree
+        cuckootree.init( $('#scandal_type'), 'scandal_types' ).render();
     }
 
     /* form handlers */
