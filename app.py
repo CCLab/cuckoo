@@ -139,7 +139,7 @@ def api_scandal_post(scandal_id):
 
     data["tags"] = [ tag.strip() for tag in data["tags"] ]
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, types, consequences, tags) VALUES (%s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["consequences"], data["tags"]))
+        cursor.execute("INSERT INTO scandals (name, description, types, consequences, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["consequences"], data["tags"]))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
