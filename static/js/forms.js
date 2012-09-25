@@ -43,6 +43,10 @@ var tpl_event_form = '<li class="event">'
     + '<ul class="actors boxed-list">'
     + '<li class="btn-add-actor"><input class="flat-button" type="button" onclick="add_actor_form(this)" value="Dodaj aktora"></li>'
     + '</ul>'
+    + '<h3>Bibliografia</h3>'
+    + '<ul class="refs boxed-list">'
+    + '<li class="btn-add-ref"><input class="flat-button" type="button" onclick="add_ref_form(this)" value="Dodaj pozycję"></li>'
+    + '</ul>'
     + '</li>';
 /* TODO: actor form accessablility (add label for and input id attributes) */
 var tpl_actor_form = '<li class="actor">'
@@ -57,6 +61,15 @@ var tpl_actor_form = '<li class="actor">'
     + '<br><label>Afiliacja</label> <select class="actor_affiliation"></select>'
     + ' <input type="button" onclick="add_option_popup(this, \'actor_affiliations\')" class="button-small" value="+">'
     + '<br><label>Tagi (oddzielone średnikiem)</label> <input type="text" class="actor_tags">'
+    + '</li>';
+/* TODO: ref form accessability (see actor form TODO) */
+var tpl_ref_form = '<li class="ref">'
+    + '<label>Tytuł publikacji</label> <input type="text" class="ref_pub_title">'
+    + '<br><label>Tytuł artykułu</label> <input type="text" class="ref_art_title">'
+    + '<br><label>URL</label> <input type="text" class="ref_url">'
+    + '<br><input type="checkbox" class="ref_pub_date_flag"> <label>Data publikacji</label>'
+    + '<br><div class="ref_pub_date"></div>'
+    + '<input type="hidden" class="ref_id" value="0">'
     + '</li>';
 var select_stub = {
     "items": [],
@@ -116,7 +129,6 @@ function add_event_form(event_dict) {
     /* add new event form to the bottom, just before the button */
     $("#btn-add-event").before(Mustache.render(tpl_event_form, form_dict));
 
-
     /* enable datepicker */
     $("#event-" + event_counter + "-event_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
     $("#event-" + event_counter + "-publication_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
@@ -147,9 +159,16 @@ function add_event_form(event_dict) {
         cuckootree.init( $('#event-' + event_counter + '-type_tree'), 'event_types' )
             .select(event_dict.types).render();
 
-        var link = $("#event-" + event_counter + "-type").parent().find(".btn-add-actor > input");
+        // actors
+        var link = $("#event-" + event_counter + "-type_tree").parent().find(".btn-add-actor > input");
         $.each(event_dict.actors, function(index, value) {
             add_actor_form(link, value);
+        });
+
+        // refs
+        var reflink = $("#event-" + event_counter + "-type_tree").parent().find(".btn-add-ref > input");
+        $.each(event_dict.refs, function(index, value) {
+            add_ref_form(reflink, value);
         });
     } else {
         // prepare empty
@@ -246,7 +265,7 @@ function add_actor_form(link, actor_dict) {
         actor_form.children(".actor_affiliation").removeAttr("disabled");
     });
 
-    /* insert data form actor_dict */
+    // insert data form actor_dict
     if(typeof(actor_dict) !== "undefined") {
         if(find_if_human(actor_dict.id)) {
             actor_form.children('input[type="radio"][value="1"]').attr("checked", "checked").change();
@@ -259,6 +278,26 @@ function add_actor_form(link, actor_dict) {
         actor_form.children(".actor_affiliation").val(actor_dict.affiliation_id);
         if(actor_dict.tags !== null) {
             actor_form.children(".actor_tags").val(actor_dict.tags.join("; "));
+        }
+    }
+}
+
+function add_ref_form(link, ref_dict) {
+    var form_dict = {};
+    $(link).parents(".refs").children(".btn-add-ref").before(Mustache.render(tpl_ref_form, form_dict));
+    var ref_form = $(link).parents(".refs").children(".ref").last();
+
+    ref_form.children(".ref_pub_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
+
+    // insert data form ref_dict
+    if(typeof(ref_dict) !== "undefined") {
+        ref_form.children(".ref_id").val(ref_dict.id);
+        ref_form.children(".ref_pub_title").val(ref_dict.pub_title);
+        ref_form.children(".ref_art_title").val(ref_dict.art_title);
+        ref_form.children(".ref_url").val(ref_dict.url);
+        if(ref_dict.pub_date !== null) {
+            ref_form.children(".ref_pub_date_flag").attr("checked", "checked");
+            ref_form.children(".ref_pub_date").datepicker("setDate", ref_dict.pub_date);
         }
     }
 }
@@ -534,7 +573,8 @@ function initDone() {
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
                     "description": description,
                     "publication_date": $(this).children('[id$="-publication_date"]').datepicker("getDate"),
-                    "actors": []
+                    "actors": [],
+                    "refs": []
                 };
                 if(!$(this).children('[id$="-publication_date_flag"]').is(":checked"))
                 {
@@ -554,7 +594,19 @@ function initDone() {
                     });
                 });
 
-                // references go in here
+                $(this).children(".refs").children(".ref").each(function(index, value) {
+                    var pub_date = null;
+                    if($(value).children('.ref_pub_date_flag').is(':checked')) {
+                        pub_date = $(value).children('.ref_pub_date').datepicker("getDate");
+                    }
+                    event_dict["refs"].push({
+                        "id": $(value).children(".ref_id").val(),
+                        "pub_title": $(value).children(".ref_pub_title").val(),
+                        "art_title": $(value).children(".ref_art_title").val(),
+                        "url": $(value).children(".ref_url").val(),
+                        "pub_date": pub_date
+                    });
+                });
 
                 scandal["events"].push(event_dict);
             }

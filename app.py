@@ -102,7 +102,7 @@ def api_scandal_get(scandal_id):
 
     # fetch events for that scandal
     query = '''SELECT id, description, location_id, event_date,
-                      publication_date, types
+                      publication_date, types, refs
                FROM events
                WHERE scandal_id = %s ORDER BY event_date ASC
             ''' % scandal_id
@@ -117,6 +117,7 @@ def api_scandal_get(scandal_id):
         event["publication_date"] = None if not event["publication_date"]\
                                          else event["publication_date"].strftime("%Y-%m-%d")
 
+        # actors
         query = '''SELECT actor_id as id, type_id, role_id, affiliation_id, tags
                    FROM actors_events
                    WHERE event_id = %s
@@ -124,6 +125,22 @@ def api_scandal_get(scandal_id):
 
         cursor.execute( query )
         event["actors"] = [ row for row in cursor.fetchall() ]
+
+        # references
+        if event["refs"]:
+            query = '''SELECT id, art_title, pub_title, url, pub_date
+                       FROM refs
+                       WHERE id IN (%s)
+                    ''' % ",".join([ str(ref) for ref in event["refs"] ])
+
+            cursor.execute( query )
+            event["refs"] = [ row for row in cursor.fetchall() ]
+
+            for ref in event["refs"]:
+                ref["pub_date"] = None if not ref["pub_date"]\
+                    else ref["pub_date"].strftime("%Y-%m-%d")
+        else:
+            event["refs"] = []
 
     scandal["events"] = events
 
@@ -165,19 +182,42 @@ def api_scandal_post(scandal_id):
     # and add new events
 
     for event in data["events"]:
-        # We need to add a day to the returning dates because of
+        # NOTE: We need to add a day to the returning dates because of
         # some strange behaviour of the jQuery datepicker.
         if event["event_date"] is not None:
             dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
             event["event_date"] = dt.strftime("%Y-%m-%d")
         if event["publication_date"] is not None:
             dt = datetime.strptime(event["publication_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
-            event["publication_date"] = dt.strftime("%Y-%m-%d")
+            vent["publication_date"] = dt.strftime("%Y-%m-%d")
 
-        # First, we need to insert the event
-        cursor.execute("INSERT INTO events (description, scandal_id, location_id, event_date, publication_date, types) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id", (event["description"], scandal_id, event["location_id"], event["event_date"], event["publication_date"], event["types"]))
+        # references
+        ref_ids = []
+        for ref in event["refs"]:
+            # we add one day, see the NOTE above events
+            if ref["pub_date"] is not None:
+                dt = datetime.strptime(ref["pub_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
+                ref["pub_date"] = dt.strftime("%Y-%m-%d")
+
+            if ref["id"] != '0':
+                cursor.execute( 'UPDATE refs SET pub_title = %s, art_title = %s,'\
+                    ' url = %s, pub_date = %s WHERE id = %s',\
+                    (ref["pub_title"], ref["art_title"], ref["url"], ref["pub_date"], ref["id"]) )
+                ref_ids.append( int(ref["id"]) )
+            else:
+                cursor.execute( 'INSERT INTO refs (pub_title, art_title, url, pub_date)'\
+                    'VALUES (%s, %s, %s, %s) RETURNING id',\
+                    (ref["pub_title"], ref["art_title"], ref["url"], ref["pub_date"]) )
+                ref_ids.append( cursor.fetchone()["id"] )
+
+        # insert the event
+        cursor.execute( 'INSERT INTO events'\
+            '(description, scandal_id, location_id, event_date, publication_date, types, refs)'\
+            'VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id',\
+            (event["description"], scandal_id, event["location_id"], event["event_date"],\
+            event["publication_date"], event["types"], ref_ids) )
         event_id = cursor.fetchone()["id"]
-        # Then, we insert into actors_events
+        # insert into actors_events
         for actor in event["actors"]:
             actor["tags"] = [ tag.strip() for tag in actor["tags"] ]
             cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"], actor["tags"]))
