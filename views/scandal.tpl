@@ -11,6 +11,7 @@
     <script src="/static/js/jquery-1.7.1.min.js"></script>
     <script src="/static/js/jquery-ui-1.8.18.custom.min.js"></script>
     <script src="/static/js/jquery.dynatree.min.js"></script>
+    <script src="/static/js/jquery.shortcuts.min.js"></script>
     <script src="/static/js/mustache.js"></script>
     <script src="/static/js/cuckootree.js"></script>
     <script src="/static/js/forms.js"></script>

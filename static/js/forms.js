@@ -624,4 +624,13 @@ function initDone() {
 
 $(document).ready(function() {
     init();
+
+    $.Shortcuts.add({
+        type: 'down',
+        mask: 'e',
+        handler: function() {
+            add_event_form();
+        }
+    });
+    $.Shortcuts.start();
 });
