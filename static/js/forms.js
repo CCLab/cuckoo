@@ -630,6 +630,10 @@ $(document).ready(function() {
         mask: 'e',
         handler: function() {
             add_event_form();
+
+            // scroll to the new event form
+            var pos = $('#events .event:last').position().top - $("#toolbar").outerHeight();
+            $(window).scrollTop(pos);
         }
     });
     $.Shortcuts.start();
