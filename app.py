@@ -101,8 +101,7 @@ def api_scandal_get(scandal_id):
         scandal["consequences"] = []
 
     # fetch events for that scandal
-    query = '''SELECT id, description, location_id, event_date,
-                      publication_date, types, refs
+    query = '''SELECT id, description, location_id, event_date, types, refs
                FROM events
                WHERE scandal_id = %s ORDER BY event_date ASC
             ''' % scandal_id
@@ -114,8 +113,6 @@ def api_scandal_get(scandal_id):
     for event in events:
         event['event_date'] = None if not event['event_date']\
                                    else   event["event_date"].strftime("%Y-%m-%d")
-        event["publication_date"] = None if not event["publication_date"]\
-                                         else event["publication_date"].strftime("%Y-%m-%d")
 
         # actors
         query = '''SELECT actor_id as id, type_id, role_id, affiliation_id, tags
@@ -187,9 +184,6 @@ def api_scandal_post(scandal_id):
         if event["event_date"] is not None:
             dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
             event["event_date"] = dt.strftime("%Y-%m-%d")
-        if event["publication_date"] is not None:
-            dt = datetime.strptime(event["publication_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
-            vent["publication_date"] = dt.strftime("%Y-%m-%d")
 
         # references
         ref_ids = []
@@ -212,10 +206,10 @@ def api_scandal_post(scandal_id):
 
         # insert the event
         cursor.execute( 'INSERT INTO events'\
-            '(description, scandal_id, location_id, event_date, publication_date, types, refs)'\
-            'VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id',\
+            '(description, scandal_id, location_id, event_date, types, refs)'\
+            'VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',\
             (event["description"], scandal_id, event["location_id"], event["event_date"],\
-            event["publication_date"], event["types"], ref_ids) )
+            event["types"], ref_ids) )
         event_id = cursor.fetchone()["id"]
         # insert into actors_events
         for actor in event["actors"]:

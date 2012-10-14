@@ -37,8 +37,6 @@ var tpl_event_form = '<li class="event">'
     + '<br><div id="event-{{id}}-type_tree"></div>'
     + '<br><label for="event-{{id}}-description">Opis</label>'
     + '<br><textarea id="event-{{id}}-description" rows="8" cols="50"></textarea>'
-    + '<br><input type="checkbox" id="event-{{id}}-publication_date_flag"> <label for="event-{{id}}-publication_date_flag">Data publikacji</label>'
-    + '<br><div id="event-{{id}}-publication_date"></div>'
     + '<h3>Aktorzy</h3>'
     + '<ul class="actors boxed-list">'
     + '<li class="btn-add-actor"><input class="flat-button" type="button" onclick="add_actor_form(this)" value="Dodaj aktora"></li>'
@@ -131,30 +129,12 @@ function add_event_form(event_dict) {
 
     /* enable datepicker */
     $("#event-" + event_counter + "-event_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
-    $("#event-" + event_counter + "-publication_date").datepicker({changeMonth: true, changeYear: true, firstDay: 1, yearRange: "1980:2012", dateFormat: "yy-mm-dd"});
-
-    /* bind change event to publication date flag */
-    $("#event-" + event_counter + "-publication_date_flag").change(function() {
-        var id = $(this).parents("li").data("id");
-        if($(this).is(":checked")) {
-            $("#event-" + id + "-publication_date").show();
-        } else {
-            $("#event-" + id + "-publication_date").hide();
-        }
-    });
 
     if(typeof(event_dict) !== "undefined") {
         // fill with data from event_dict
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
         $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
         $("#event-" + event_counter + "-description").val( event_dict.description );
-
-        if(event_dict.publication_date === null) {
-            $("#event-" + event_counter + "-publication_date_flag").removeAttr("checked").change();
-        } else {
-            $("#event-" + event_counter + "-publication_date_flag").attr("checked", "checked").change();
-        }
-        $("#event-" + event_counter + "-publication_date").datepicker("setDate", event_dict.publication_date);
 
         cuckootree.init( $('#event-' + event_counter + '-type_tree'), 'event_types' )
             .select(event_dict.types).render();
@@ -488,12 +468,14 @@ function initCount() {
 }
 
 function initDone() {
-    /* which scandal are we talking about, again? */
+    // which scandal are we talking about, again?
+    // TODO: don't extract it from the URL, put some JS
+    // in the template instead
     var path = window.location.pathname.split("/");
     var scandal_str = parseInt(path[path.length-1]);
     scandal_id = isNaN(scandal_str) ? null : scandal_str;
 
-    /* if id was given, load me some scandal data */
+    // if id was given, load me some scandal data
     if(scandal_id !== null) {
         $.getJSON("/api/scandal/"+scandal_id, function(data) {
             for(i=0; i<data.name.length; i++) {
@@ -572,14 +554,9 @@ function initDone() {
                     "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
                     "description": description,
-                    "publication_date": $(this).children('[id$="-publication_date"]').datepicker("getDate"),
                     "actors": [],
                     "refs": []
                 };
-                if(!$(this).children('[id$="-publication_date_flag"]').is(":checked"))
-                {
-                    event_dict.publication_date = null;
-                }
 
                 event_dict["types"] = cuckootree.getSelected( $(this).children('[id$="-type_tree"]') );
 
