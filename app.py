@@ -151,7 +151,9 @@ def api_scandal_post(scandal_id):
     conn = psql.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
+    # prepare the data
     data["tags"] = [ tag.strip() for tag in data["tags"] ]
+
     if scandal_id == "new":
         cursor.execute("INSERT INTO scandals (name, description, types, consequences, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["consequences"], data["tags"]))
         scandal_id = cursor.fetchone()["id"]
@@ -166,26 +168,26 @@ def api_scandal_post(scandal_id):
             "message": "Data stored."
         }
 
-        # here we have to delete all events
-        # links between actors and events will be automatically deleted
-        # (ON DELETE CASCADE constraint)
-        # actors will not be deleted
-
-        cursor.execute("DELETE FROM events WHERE scandal_id = %s", (scandal_id,))
+        # get old event IDs to know which one need to be deleted
+        cursor.execute('SELECT id FROM events WHERE scandal_id = %s', (scandal_id,))
+        old_event_ids = [ event['id'] for event in cursor.fetchall() ]
 
     # TODO: we could process each and every one of the events
     # keeping the ids in hidden inputs
     # for now we'll just clean event data for the scandal
     # and add new events
 
+    # NOTE: We need to add a day to the returning dates because of
+    # some strange behaviour of the jQuery datepicker.
     for event in data["events"]:
-        # NOTE: We need to add a day to the returning dates because of
-        # some strange behaviour of the jQuery datepicker.
         if event["event_date"] is not None:
             dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
             event["event_date"] = dt.strftime("%Y-%m-%d")
 
-        # references
+    # TODO: sort events by event_date here
+
+    for event in data["events"]:
+        # insert/update references
         ref_ids = []
         for ref in event["refs"]:
             # we add one day, see the NOTE above events
@@ -200,21 +202,44 @@ def api_scandal_post(scandal_id):
                 ref_ids.append( int(ref["id"]) )
             else:
                 cursor.execute( 'INSERT INTO refs (pub_title, art_title, url, pub_date)'\
-                    'VALUES (%s, %s, %s, %s) RETURNING id',\
+                    ' VALUES (%s, %s, %s, %s) RETURNING id',\
                     (ref["pub_title"], ref["art_title"], ref["url"], ref["pub_date"]) )
                 ref_ids.append( cursor.fetchone()["id"] )
 
-        # insert the event
-        cursor.execute( 'INSERT INTO events'\
-            '(description, scandal_id, location_id, event_date, types, refs)'\
-            'VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',\
-            (event["description"], scandal_id, event["location_id"], event["event_date"],\
-            event["types"], ref_ids) )
-        event_id = cursor.fetchone()["id"]
+        # insert/update the event
+        if event["id"] != '0':
+            event_id = int(event["id"])
+            cursor.execute( 'UPDATE events'\
+                ' SET description = %s, scandal_id = %s, location_id = %s, event_date = %s,'\
+                ' types = %s, refs = %s WHERE id = %s',\
+                (event["description"], scandal_id, event["location_id"], event["event_date"],\
+                event["types"], ref_ids, event_id) )
+
+            # event was updated, no need to delete it
+            old_event_ids = [ eid for eid in old_event_ids if eid != event_id ]
+
+            # delete event-actor links so they could later be inserted
+            # (they are not tracked via IDs)
+            cursor.execute('DELETE FROM actors_events WHERE event_id = %s', (event_id,))
+
+        else:
+            cursor.execute( 'INSERT INTO events'\
+                ' (description, scandal_id, location_id, event_date, types, refs)'\
+                ' VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',\
+                (event["description"], scandal_id, event["location_id"], event["event_date"],\
+                event["types"], ref_ids) )
+            event_id = cursor.fetchone()["id"]
+
         # insert into actors_events
         for actor in event["actors"]:
             actor["tags"] = [ tag.strip() for tag in actor["tags"] ]
             cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"], actor["tags"]))
+
+    # TODO: refs are not deleted
+    if old_event_ids:
+        cursor.execute('''DELETE FROM events 
+                          WHERE id IN (%s)
+                       ''' % ",".join([ str(eid) for eid in old_event_ids ]) )
 
     conn.commit()
 

@@ -199,3 +199,7 @@ body.scandal-form #toolbar {
 #scandal_type_tree a {
     border-bottom: none;
 }
+
+.delete-toolbar {
+    float: right;
+}

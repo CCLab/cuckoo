@@ -29,6 +29,8 @@ var tpl_input_text = '<input type="text" value="{{value}}">';
 var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" value="{{id}}"><label for="scandal_consequence-{{id}}">{{name}}</label>';
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
+    + '<span class="delete-toolbar"><input type="button" class="button-small" value="Usuń wydarzenie" onclick="delete_event(this)"></span>'
+    + '<input type="hidden" class="event_id" value="0">'
     + '{{{select_locations}}}'
     + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
     + '<br>Data wydarzenia'
@@ -62,12 +64,12 @@ var tpl_actor_form = '<li class="actor">'
     + '</li>';
 /* TODO: ref form accessability (see actor form TODO) */
 var tpl_ref_form = '<li class="ref">'
+    + '<input type="hidden" class="ref_id" value="0">'
     + '<label>Tytuł publikacji</label> <input type="text" class="ref_pub_title">'
     + '<br><label>Tytuł artykułu</label> <input type="text" class="ref_art_title">'
     + '<br><label>URL</label> <input type="text" class="ref_url">'
     + '<br><input type="checkbox" class="ref_pub_date_flag"> <label>Data publikacji</label>'
     + '<br><div class="ref_pub_date"></div>'
-    + '<input type="hidden" class="ref_id" value="0">'
     + '</li>';
 var select_stub = {
     "items": [],
@@ -132,6 +134,10 @@ function add_event_form(event_dict) {
 
     if(typeof(event_dict) !== "undefined") {
         // fill with data from event_dict
+
+        // set event_id
+        $("#event-" + event_counter + "-location").parent().find("input.event_id").val(event_dict.id);
+
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
         $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
         $("#event-" + event_counter + "-description").val( event_dict.description );
@@ -393,6 +399,12 @@ function add_option_popup(link, option_realm) {
         }).focus();
 }
 
+function delete_event(button) {
+    $(button).parents('.event').hide('slow', function() {
+        $(this).remove();
+    });
+}
+
 function init() {
     /* scandal_types */
     $.getJSON("/options/scandal_types", function(data) {
@@ -551,6 +563,7 @@ function initDone() {
             var description = $(this).children('[id$="-description"]').val();
             if(description !== "") {
                 var event_dict = {
+                    "id": $(this).children('.event_id').val(),
                     "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
                     "description": description,
