@@ -29,7 +29,11 @@ var tpl_input_text = '<input type="text" value="{{value}}">';
 var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" value="{{id}}"><label for="scandal_consequence-{{id}}">{{name}}</label>';
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
-    + '<span class="delete-toolbar"><input type="button" class="button-small" value="Usuń wydarzenie" onclick="delete_event(this)"></span>'
+    + '<span class="delete-toolbar">'
+    + '<input type="button" class="button-small" value="↑" onclick="move_event(this, \'up\')">'
+    + ' <input type="button" class="button-small" value="↓" onclick="move_event(this, \'down\')">'
+    + ' <input type="button" class="button-small" value="Usuń wydarzenie" onclick="delete_event(this)">'
+    + '</span>'
     + '<input type="hidden" class="event_id" value="0">'
     + '{{{select_locations}}}'
     + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
@@ -403,6 +407,22 @@ function delete_event(button) {
     $(button).parents('.event').hide('slow', function() {
         $(this).remove();
     });
+}
+
+function move_event(button, direction) {
+    var event_div = $(button).parents('.event');
+
+    if(direction === 'up')         var target = event_div.prev();
+    else if(direction === 'down')  var target = event_div.next();
+    
+    if(target.length == 0) {
+        if(direction === 'up')         alert('Nie można przenieść wyżej!');
+        else if(direction === 'down')  alert('Nie można przenieść niżej!');
+        return;
+    }
+
+    if(direction === 'up')         target.before(event_div);
+    else if(direction === 'down')  target.after(event_div);
 }
 
 function init() {

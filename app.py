@@ -84,7 +84,7 @@ def scandal_show(scandal_id):
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    query = '''SELECT name, description, types, consequences, tags
+    query = '''SELECT name, description, types, consequences, tags, events
                FROM scandals
                WHERE id = %s
             ''' % scandal_id
@@ -100,13 +100,20 @@ def api_scandal_get(scandal_id):
     except:
         scandal["consequences"] = []
 
-    # fetch events for that scandal
-    query = '''SELECT id, description, location_id, event_date, types, refs
-               FROM events
-               WHERE scandal_id = %s ORDER BY event_date ASC
-            ''' % scandal_id
-    cursor.execute( query )
-    events = cursor.fetchall()
+    if scandal["events"]:
+        # fetch events for that scandal
+        eids_str = [ str(eid) for eid in scandal["events"] ]
+        query = '''SELECT id, description, location_id, event_date, types, refs
+                   FROM events
+                   WHERE id IN (%s)
+                ''' % ",".join(eids_str)
+        # looks awful, but the only way to guarantee order without
+        # doing a lot of queries
+        query = query + " ORDER BY id = " + " DESC, id = ".join(eids_str) + " DESC"
+        cursor.execute(query)
+        events = cursor.fetchall()
+    else:
+        events = []
 
     # TODO: mill through events, find actors and their attributes
     # TODO: check and operator instead of ifs
@@ -177,6 +184,9 @@ def api_scandal_post(scandal_id):
     # for now we'll just clean event data for the scandal
     # and add new events
 
+    # we'll gather event IDs to update []scandals/events
+    event_ids = []
+
     # NOTE: We need to add a day to the returning dates because of
     # some strange behaviour of the jQuery datepicker.
     for event in data["events"]:
@@ -184,7 +194,8 @@ def api_scandal_post(scandal_id):
             dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
             event["event_date"] = dt.strftime("%Y-%m-%d")
 
-    # TODO: sort events by event_date here
+    # sort events by event_date
+    data["events"].sort(key=lambda x: x["event_date"])
 
     for event in data["events"]:
         # insert/update references
@@ -210,36 +221,38 @@ def api_scandal_post(scandal_id):
         if event["id"] != '0':
             event_id = int(event["id"])
             cursor.execute( 'UPDATE events'\
-                ' SET description = %s, scandal_id = %s, location_id = %s, event_date = %s,'\
+                ' SET description = %s, location_id = %s, event_date = %s,'\
                 ' types = %s, refs = %s WHERE id = %s',\
-                (event["description"], scandal_id, event["location_id"], event["event_date"],\
+                (event["description"], event["location_id"], event["event_date"],\
                 event["types"], ref_ids, event_id) )
-
-            # event was updated, no need to delete it
-            old_event_ids = [ eid for eid in old_event_ids if eid != event_id ]
 
             # delete event-actor links so they could later be inserted
             # (they are not tracked via IDs)
             cursor.execute('DELETE FROM actors_events WHERE event_id = %s', (event_id,))
-
         else:
             cursor.execute( 'INSERT INTO events'\
-                ' (description, scandal_id, location_id, event_date, types, refs)'\
-                ' VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',\
-                (event["description"], scandal_id, event["location_id"], event["event_date"],\
+                ' (description, location_id, event_date, types, refs)'\
+                ' VALUES (%s, %s, %s, %s, %s) RETURNING id',\
+                (event["description"], event["location_id"], event["event_date"],\
                 event["types"], ref_ids) )
             event_id = cursor.fetchone()["id"]
+
+        event_ids.append(event_id)
 
         # insert into actors_events
         for actor in event["actors"]:
             actor["tags"] = [ tag.strip() for tag in actor["tags"] ]
             cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"], actor["tags"]))
 
-    # TODO: refs are not deleted
-    if old_event_ids:
+    # TODO: old refs are not deleted
+    to_delete = [ eid for eid in old_event_ids if eid not in event_ids ]
+    if to_delete:
         cursor.execute('''DELETE FROM events 
                           WHERE id IN (%s)
-                       ''' % ",".join([ str(eid) for eid in old_event_ids ]) )
+                       ''' % ",".join([ str(eid) for eid in to_delete ]) )
+
+    # update []scandals/events
+    cursor.execute("UPDATE scandals SET events = %s WHERE id = %s", (event_ids, scandal_id))
 
     conn.commit()
 

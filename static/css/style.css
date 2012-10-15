@@ -169,6 +169,9 @@ body.scandal-form #toolbar {
 .event-list li {
     padding: 1em;
 }
+.event-list > li {
+    border-top: 2px solid rgba(0,0,0,0.5);
+}
 .event-list #btn-add-event a {
     display: block;
     border: none;
