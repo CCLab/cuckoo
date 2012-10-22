@@ -58,12 +58,9 @@ var tpl_actor_form = '<li class="actor">'
     + '<input type="radio" value="1"> <label>osoba</label>'
     + '<br><label>Nazwa</label> <select class="actor_name"></select>'
     + ' <input type="button" onclick="add_option_popup(this, \'actors\')" class="button-small" value="+">'
-    + '<br><label>Typ</label> <select class="actor_type"></select>'
-    + ' <input type="button" onclick="add_option_popup(this, \'actor_types\')" class="button-small" value="+">'
-    + '<br><label>Rola</label> <select class="actor_role"></select>'
-    + ' <input type="button" onclick="add_option_popup(this, \'actor_roles\')" class="button-small" value="+">'
-    + '<br><label>Afiliacja</label> <select class="actor_affiliation"></select>'
-    + ' <input type="button" onclick="add_option_popup(this, \'actor_affiliations\')" class="button-small" value="+">'
+    + '<br><label>Typy</label><br><div class="actor_type"></div>'
+    + '<br><label>Role</label><br><div class="actor_role"></div>'
+    + '<br><label>Afiliacje</label><br><div class="actor_affiliation"></div>'
     + '<br><label>Tagi (oddzielone średnikiem)</label> <input type="text" class="actor_tags">'
     + '</li>';
 /* TODO: ref form accessability (see actor form TODO) */
@@ -173,12 +170,9 @@ function add_actor_form(link, actor_dict) {
     $(link).parents(".actors").children(".btn-add-actor").before(Mustache.render(tpl_actor_form, form_dict));
     var actor_form = $(link).parents(".actors").children(".actor").last();
     actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-    actor_form.children(".actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-    actor_form.children(".actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-    actor_form.children(".actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
     /* bind change event to actor_affiliation to create a new tag */
-    actor_form.children('.actor_affiliation').change(function() {
+    /*actor_form.children('.actor_affiliation').change(function() {
         if(actor_form.children('.actor_tags').val() === "") {
             var human = 0;
             if(actor_form.children('input[type="radio"][value="1"]').attr("checked") === "checked") { 
@@ -193,82 +187,88 @@ function add_actor_form(link, actor_dict) {
                 }
             }
         }
-    });
+    });*/
 
-    /* bind change event to actor_human radio button */
+    // bind change event to actor_human radio button
     actor_form.children('input[type="radio"][value="0"]').change(function() {
         // HACK for lack of input radio name
         actor_form.children('input[type="radio"][value="1"]').removeAttr("checked");
         // end HACK
 
-        /* disable controls */
         actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-
-        /* reload values and enable */
         $.each(cuckoo.actors[0], function(index, value) {
             actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, value));
         });
         actor_form.children(".actor_name").removeAttr("disabled");
-        $.each(cuckoo.actor_types[0], function(index, value) {
-            actor_form.children(".actor_type").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_type").removeAttr("disabled");
-        $.each(cuckoo.actor_roles[0], function(index, value) {
-            actor_form.children(".actor_role").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_role").removeAttr("disabled");
-        $.each(cuckoo.actor_affiliations[0], function(index, value) {
-            actor_form.children(".actor_affiliation").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_affiliation").removeAttr("disabled");
+
+        cuckootree.init( actor_form.children(".actor_type"), 'actor_types' )
+            .addRequestParam('human', 0)
+            .render();
+        cuckootree.init( actor_form.children(".actor_role"), 'actor_roles' )
+            .addRequestParam('human', 0)
+            .render();
+        cuckootree.init( actor_form.children(".actor_affiliation"), 'actor_affiliations' )
+            .addRequestParam('human', 0)
+            .render();
     });
     actor_form.children('input[type="radio"][value="1"]').change(function() {
         // HACK for lack of input radio name
         actor_form.children('input[type="radio"][value="0"]').removeAttr("checked");
         // end HACK
 
-        /* disable controls */
         actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_type").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_role").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-        actor_form.children(".actor_affiliation").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
-
-        /* reload values and enable */
         $.each(cuckoo.actors[1], function(index, value) {
             actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, value));
         });
         actor_form.children(".actor_name").removeAttr("disabled");
-        $.each(cuckoo.actor_types[1], function(index, value) {
-            actor_form.children(".actor_type").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_type").removeAttr("disabled");
-        $.each(cuckoo.actor_roles[1], function(index, value) {
-            actor_form.children(".actor_role").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_role").removeAttr("disabled");
-        $.each(cuckoo.actor_affiliations[1], function(index, value) {
-            actor_form.children(".actor_affiliation").append(Mustache.render(tpl_select_option, value));
-        });
-        actor_form.children(".actor_affiliation").removeAttr("disabled");
+
+        cuckootree.init( actor_form.children(".actor_type"), 'actor_types' )
+            .addRequestParam('human', 1)
+            .render();
+        cuckootree.init( actor_form.children(".actor_role"), 'actor_roles' )
+            .addRequestParam('human', 1)
+            .render();
+        cuckootree.init( actor_form.children(".actor_affiliation"), 'actor_affiliations' )
+            .addRequestParam('human', 1)
+            .render();
     });
 
     // insert data form actor_dict
     if(typeof(actor_dict) !== "undefined") {
         if(find_if_human(actor_dict.id)) {
-            actor_form.children('input[type="radio"][value="1"]').attr("checked", "checked").change();
+            actor_form.children('input[type="radio"][value="1"]').attr("checked", "checked");
+
+            actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+            $.each(cuckoo.actors[1], function(index, value) {
+                actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, value));
+            });
+            actor_form.children(".actor_name").removeAttr("disabled");
         } else {
-            actor_form.children('input[type="radio"][value="0"]').attr("checked", "checked").change();
+            actor_form.children('input[type="radio"][value="0"]').attr("checked", "checked");
+
+            actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
+            $.each(cuckoo.actors[0], function(index, value) {
+                actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, value));
+            });
+            actor_form.children(".actor_name").removeAttr("disabled");
         }
+
         actor_form.children(".actor_name").val(actor_dict.id);
-        actor_form.children(".actor_type").val(actor_dict.type_id);
-        actor_form.children(".actor_role").val(actor_dict.role_id);
-        actor_form.children(".actor_affiliation").val(actor_dict.affiliation_id);
+
         if(actor_dict.tags !== null) {
             actor_form.children(".actor_tags").val(actor_dict.tags.join("; "));
         }
+
+        var human_param = find_if_human(actor_dict.id) ? 1 : 0;
+        cuckootree.init( actor_form.children(".actor_type"), 'actor_types' )
+            .addRequestParam('human', human_param)
+            .select(actor_dict.types).render();
+        cuckootree.init( actor_form.children(".actor_role"), 'actor_roles' )
+            .addRequestParam('human', human_param)
+            .select(actor_dict.roles).render();
+        cuckootree.init( actor_form.children(".actor_affiliation"), 'actor_affiliations' )
+            .addRequestParam('human', human_param)
+            .select(actor_dict.affiliations).render();
     }
 }
 
@@ -594,14 +594,17 @@ function initDone() {
                 event_dict["types"] = cuckootree.getSelected( $(this).children('[id$="-type_tree"]') );
 
                 $(this).children(".actors").children(".actor").each(function(index, value) {
-                    event_dict["actors"].push({
+                    var actor_dict = {
                         "id": ($(value).children(".actor_name").val() === "0" ? null : $(value).children(".actor_name").val()),
-                        "type_id": ($(value).children(".actor_type").val() === "0" ? null : $(value).children(".actor_type").val()),
-                        "role_id": ($(value).children(".actor_role").val() === "0" ? null : $(value).children(".actor_role").val()),
 
-                        "affiliation_id": ($(value).children(".actor_affiliation").val() === "0" ? null : $(value).children(".actor_affiliation").val()),
                         "tags": $(value).children(".actor_tags").val().split(";")
-                    });
+                    }
+
+                    actor_dict['types'] = cuckootree.getSelected( $(value).children('.actor_type') );
+                    actor_dict['roles'] = cuckootree.getSelected( $(value).children('.actor_role') );
+                    actor_dict['affiliations'] = cuckootree.getSelected( $(value).children('.actor_affiliation') );
+
+                    event_dict['actors'].push(actor_dict);
                 });
 
                 $(this).children(".refs").children(".ref").each(function(index, value) {

@@ -11,6 +11,8 @@ var cuckootree = {
         // realm class to help with tree refresh
         parent_div.addClass('cuckootree-parent ' + realm);
 
+        parent_div.html('');
+
         // add toolbar
         $('<div/>').addClass('cuckootree-toolbar').appendTo(parent_div);
 
@@ -19,7 +21,7 @@ var cuckootree = {
                 var active_node = parent_div.children('.cuckootree-wrapper')
                     .dynatree("getTree").getActiveNode();
                 var realm = parent_div.data('cuckootree').realm;
-                console.log(realm);
+                var params = parent_div.data('cuckootree').requestParams;
 
                 $("#cuckootree-dialog").data('caller', parent_div)
                     .html('<input type="text"><input type="hidden">')
@@ -33,6 +35,8 @@ var cuckootree = {
                                 if(active_node !== null && $('#cuckootree-dialog-checkbox').is(":checked")) {
                                     post_data['parent'] = active_node.data.id;
                                 }
+                                if(params["human"] !== undefined)
+                                    post_data['human'] = params["human"];
 
                                 $.ajax({
                                     url: '/api/' + realm,
@@ -146,12 +150,6 @@ var cuckootree = {
                 var treeId = Math.floor(Math.random()*1001);
                 this.parent_div.children('.cuckootree-wrapper')
                     .dynatree({
-                        onActivate: function(node) {
-                            console.log('Node "' + node.data.title + '" (' + node.data.id + ') activated');
-                        },
-                        onSelect: function(flag, node) {
-                            console.log('Node "' + node.data.title + '" (' + node.data.id + ') (de)selected');
-                        },
                         onPostInit: function(isReloading, isError) {
                             var cuckootree = $(this.divTree).parents('.cuckootree-parent').data('cuckootree');
                             this.visit(function(node) {

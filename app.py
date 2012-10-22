@@ -39,7 +39,7 @@ option_tables = [
     "actors"
 ]
 option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
-option_tables_with_children = ["scandal_types", "event_types"]
+option_tables_with_children = ["scandal_types", "event_types", "actor_types", "actor_roles", "actor_affiliations"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "actors"]
 
 def db_cursor():
@@ -122,7 +122,7 @@ def api_scandal_get(scandal_id):
                                    else   event["event_date"].strftime("%Y-%m-%d")
 
         # actors
-        query = '''SELECT actor_id as id, type_id, role_id, affiliation_id, tags
+        query = '''SELECT actor_id as id, types, roles, affiliations, tags
                    FROM actors_events
                    WHERE event_id = %s
                 ''' % event['id']
@@ -242,7 +242,7 @@ def api_scandal_post(scandal_id):
         # insert into actors_events
         for actor in event["actors"]:
             actor["tags"] = [ tag.strip() for tag in actor["tags"] ]
-            cursor.execute("INSERT INTO actors_events (actor_id, event_id, role_id, type_id, affiliation_id, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["role_id"], actor["type_id"], actor["affiliation_id"], actor["tags"]))
+            cursor.execute("INSERT INTO actors_events (actor_id, event_id, roles, types, affiliations, tags) VALUES (%s, %s, %s, %s, %s, %s)", (actor["id"], event_id, actor["roles"], actor["types"], actor["affiliations"], actor["tags"]))
 
     # TODO: old refs are not deleted
     to_delete = [ eid for eid in old_event_ids if eid not in event_ids ]
@@ -264,7 +264,11 @@ def options_get(realm):
         cursor = db_cursor()
 
         if realm in option_tables_with_children:
-            cursor.execute('SELECT id, name, parent FROM {0}'.format(realm))
+            if realm in option_tables_may_be_human:
+                cursor.execute('SELECT id, name, parent FROM {0} WHERE human = %s'.format(realm),\
+                    (request.query.human,))
+            else:
+                cursor.execute('SELECT id, name, parent FROM {0}'.format(realm))
             types = cursor.fetchall()
 
             # add top nodes to a tree
@@ -301,16 +305,24 @@ def options_create(realm):
         conn = psql.connect(conn_string)
         cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
-        if realm in option_tables_with_children:
+        if realm in option_tables_may_be_human:
+            # human (boolean) must be specified
+            # parent (integer) may be specified
+            if realm in option_tables_with_children and request.forms.parent:
+                cursor.execute("INSERT INTO {0} (human, name, parent)"\
+                    " VALUES (%s, %s, %s) RETURNING id".format(realm),\
+                    (request.forms.human, request.forms.name, request.forms.parent))
+            else:
+                cursor.execute("INSERT INTO {0} (human, name)"\
+                    " VALUES (%s, %s) RETURNING id".format(realm),\
+                    (request.forms.human, request.forms.name))
+
+        elif realm in option_tables_with_children:
             # parent (integer) may be specified
             if request.forms.parent:
                 cursor.execute("INSERT INTO {0} (parent, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
             else:
                 cursor.execute("INSERT INTO {0} (parent, name) VALUES (NULL, %s) RETURNING id".format(realm), (request.forms.name,))
-
-        elif realm in option_tables_may_be_human:
-            # human (boolean) must be specified
-            cursor.execute("INSERT INTO {0} (human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
 
         else:
             cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm), (request.forms.name,))
@@ -368,7 +380,7 @@ def options_get(realm):
         options = [ row for row in cursor.fetchall() ]
 
         # display children for scandal_types, event_types
-        if realm in option_tables_with_children:
+        if realm in ["scandal_types", "event_types"]:
             if realm == "scandal_types":
                 children_table = "scandal_subtypes"
             elif realm == "event_types":
