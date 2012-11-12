@@ -360,7 +360,7 @@ def options_get(realm):
         cursor = db_cursor()
 
         if realm == "actors":
-            cursor.execute("SELECT id, name FROM actors WHERE human = %s ORDER BY id", (request.query.human,))
+            cursor.execute("SELECT id, name FROM actors WHERE human = %s ORDER BY name", (request.query.human,))
         elif realm == "locations":
             cursor.execute("SELECT id, name FROM locations ORDER BY id")
 
