@@ -1,15 +1,10 @@
 var cuckoo = {}
-cuckoo.scandal_types = [];
-cuckoo.event_types = [];
 cuckoo.locations = [];
 cuckoo.actors = {};
-cuckoo.actor_types = {};
-cuckoo.actor_roles = {};
-cuckoo.actor_affiliations = {};
 
 var scandal_id = null;
 var event_counter = 1;
-var init_counter = 11;
+var init_counter = 3;
 
 // HACK for subtype loading
 var subtype_id = null;
@@ -172,6 +167,7 @@ function add_actor_form(link, actor_dict) {
     actor_form.children(".actor_name").attr("disabled", "disabled").html('<option value="0">(brak)</option>');
 
     /* bind change event to actor_affiliation to create a new tag */
+    // TODO: rewrite this piece, cuckoo.actor_affiliations does not exist now
     /*actor_form.children('.actor_affiliation').change(function() {
         if(actor_form.children('.actor_tags').val() === "") {
             var human = 0;
@@ -381,21 +377,9 @@ function move_event(button, direction) {
 }
 
 function init() {
-    /* scandal_types */
-    $.getJSON("/options/scandal_types", function(data) {
-        cuckoo.scandal_types = data;
-        initCount();
-    });
-
     /* locations */
     $.getJSON("/options/locations", function(data) {
         cuckoo.locations = data;
-        initCount();
-    });
-
-    /* event_types */
-    $.getJSON("/options/event_types", function(data) {
-        cuckoo.event_types = data;
         initCount();
     });
 
@@ -406,36 +390,6 @@ function init() {
     });
     $.getJSON("/options/actors", {"human": 0}, function(data) {
         cuckoo.actors[0] = data;
-        initCount();
-    });
-
-    /* actor_types */
-    $.getJSON("/options/actor_types", {"human": 1}, function(data) {
-        cuckoo.actor_types[1] = data;
-        initCount();
-    });
-    $.getJSON("/options/actor_types", {"human": 0}, function(data) {
-        cuckoo.actor_types[0] = data;
-        initCount();
-    });
-
-    /* actor_roles */
-    $.getJSON("/options/actor_roles", {"human": 1}, function(data) {
-        cuckoo.actor_roles[1] = data;
-        initCount();
-    });
-    $.getJSON("/options/actor_roles", {"human": 0}, function(data) {
-        cuckoo.actor_roles[0] = data;
-        initCount();
-    });
-
-    /* actor_affiliations */
-    $.getJSON("/options/actor_affiliations", {"human": 1}, function(data) {
-        cuckoo.actor_affiliations[1] = data;
-        initCount();
-    });
-    $.getJSON("/options/actor_affiliations", {"human": 0}, function(data) {
-        cuckoo.actor_affiliations[0] = data;
         initCount();
     });
 }
