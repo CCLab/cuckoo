@@ -29,7 +29,6 @@ if password:
 option_tables = [
     "scandal_types",
     "scandal_subtypes",
-    "scandal_consequences",
     "event_types",
     "event_subtypes",
     "locations",
@@ -84,7 +83,7 @@ def scandal_show(scandal_id):
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    query = '''SELECT name, description, types, consequences, tags, events
+    query = '''SELECT name, description, types, tags, events
                FROM scandals
                WHERE id = %s
             ''' % scandal_id
@@ -93,12 +92,6 @@ def api_scandal_get(scandal_id):
     scandal = cursor.fetchone()
     # add id to the mix
     scandal["id"] = scandal_id
-    # mill through consequences
-    # TODO move consequences in postgres into array
-    try:
-        scandal["consequences"] = [ int(c) for c in scandal['consequences'].split(",") ]
-    except:
-        scandal["consequences"] = []
 
     if scandal["events"]:
         # fetch events for that scandal
@@ -153,7 +146,6 @@ def api_scandal_get(scandal_id):
 @post('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_post(scandal_id):
     data = js.loads(request.forms.payload)
-    data["consequences"] = ",".join([ str(el) for el in data['consequences'] ])
 
     conn = psql.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
@@ -162,7 +154,7 @@ def api_scandal_post(scandal_id):
     data["tags"] = [ tag.strip() for tag in data["tags"] ]
 
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, types, consequences, tags) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["consequences"], data["tags"]))
+        cursor.execute("INSERT INTO scandals (name, description, types, tags) VALUES (%s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["tags"]))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
@@ -170,7 +162,7 @@ def api_scandal_post(scandal_id):
         }
     else:
         scandal_id = int(scandal_id)
-        cursor.execute("UPDATE scandals SET name = %s, description = %s, types = %s, consequences = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["types"], data["consequences"], data["tags"], scandal_id))
+        cursor.execute("UPDATE scandals SET name = %s, description = %s, types = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["types"], data["tags"], scandal_id))
         response = {
             "message": "Data stored."
         }

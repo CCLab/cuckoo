@@ -35,10 +35,6 @@
             <label for="scandal_description">Krótki opis</label><br><textarea id="scandal_description" rows="8" cols="50"></textarea>
             <br>Typ afery
             <br><div id="scandal_type"></div>
-            <fieldset id="scandal_consequences">
-                <legend>Szersze konsekwencje</legend>
-                <input type="button" onclick="add_option_popup(this, 'scandal_consequences')" id="scandal_consequences_btn" class="button-small" value="+">
-            </fieldset>
             <label for="scandal_tags">Tagi (oddzielone średnikiem)</label> <input type="text" id="scandal_tags" />
 
             <h2>Wydarzenia</h2>

@@ -1,6 +1,5 @@
 var cuckoo = {}
 cuckoo.scandal_types = [];
-cuckoo.scandal_consequences = [];
 cuckoo.event_types = [];
 cuckoo.locations = [];
 cuckoo.actors = {};
@@ -10,7 +9,7 @@ cuckoo.actor_affiliations = {};
 
 var scandal_id = null;
 var event_counter = 1;
-var init_counter = 12;
+var init_counter = 11;
 
 // HACK for subtype loading
 var subtype_id = null;
@@ -26,7 +25,6 @@ var tpl_select_option = '<option value="{{id}}">{{name}}</option>';
 var tpl_select = '<label for="{{id}}">{{name}}</label>'
    + ' <select id="{{id}}"><option value="0">(brak)</option>{{#items}}{{{option}}}{{/items}}</select>';
 var tpl_input_text = '<input type="text" value="{{value}}">';
-var tpl_consequence = '<input type="checkbox" id="scandal_consequence-{{id}}" value="{{id}}"><label for="scandal_consequence-{{id}}">{{name}}</label>';
 // FIXME: this is nasty
 var tpl_event_form = '<li class="event">'
     + '<span class="delete-toolbar">'
@@ -296,7 +294,7 @@ function add_option_popup(link, option_realm) {
     /* possible realms:
      *
      * scandal_types, scandal_subtypes (parent from #scandal_type)
-     * scandal_consequences, event_types
+     * event_types
      * event_subtypes (parent determined from caller context)
      * locations, actor_types, actor_roles, actor_affiliations
      */
@@ -312,7 +310,6 @@ function add_option_popup(link, option_realm) {
     else if(option_realm === "scandal_subtypes")     dialog_title = "Dodaj podtyp afery";
     else if(option_realm === "event_types")          dialog_title = "Dodaj typ wydarzenia";
     else if(option_realm === "event_subtypes")       dialog_title = "Dodaj podtyp wydarzenia";
-    else if(option_realm === "scandal_consequences") dialog_title = "Dodaj konsekwencję";
     else if(option_realm === "locations")            dialog_title = "Dodaj lokację";
     else if(option_realm === "actors")               dialog_title = "Dodaj nazwę aktora";
     else if(option_realm === "actor_types")          dialog_title = "Dodaj typ aktora";
@@ -357,9 +354,6 @@ function add_option_popup(link, option_realm) {
                         // TODO: append to cuckoo
                         $("#scandal_subtype").append(Mustache.render(tpl_select_option, el));
                         $("#scandal_subtype").val(data.id);
-                    } else if(request["realm"] === "scandal_consequences") {
-                        // TODO: append to cuckoo
-                        $("#scandal_consequences_btn").before(Mustache.render(tpl_consequence, el));
                     } else if(request["realm"] === "locations") {
                         cuckoo.locations.push(el);
                         $("#event-" + id + "-location").append(Mustache.render(tpl_select_option, el));
@@ -429,15 +423,6 @@ function init() {
     /* scandal_types */
     $.getJSON("/options/scandal_types", function(data) {
         cuckoo.scandal_types = data;
-        initCount();
-    });
-
-    /* scandal_consequences */
-    $.getJSON("/options/scandal_consequences", function(data) {
-        cuckoo.scandal_consequences = data;
-        $.each(data, function(index, value) {
-            $("#scandal_consequences_btn").before(Mustache.render(tpl_consequence, value));
-        });
         initCount();
     });
 
@@ -525,10 +510,6 @@ function initDone() {
                 //.addRequestParam('human', 0)
                 .render();
 
-            $.each(data.consequences, function(index, value) {
-                $("#scandal_consequence-"+value).attr("checked", "checked");
-            });
-            
             if(data.events.length === 0) {
                 add_event_form();
             } else {
@@ -569,11 +550,6 @@ function initDone() {
             if($(this).val() !== "") {
                 scandal["name"].push($(this).val());
             }
-        });
-
-        scandal["consequences"] = new Array();
-        $("#scandal_consequences input:checkbox:checked").each(function(index, value) {
-            scandal["consequences"].push(parseInt($(this).val()));
         });
 
         scandal["types"] = cuckootree.getSelected( $("#scandal_type") );
