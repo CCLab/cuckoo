@@ -24,7 +24,6 @@ conn_string = "host='"+ host +"' dbname='"+ dbname +"' user='"+ user +"'"
 if password:
     conn_string += " password='"+ password +"'"
 
-
 # some database structure description
 option_tables = [
     "scandal_types",
@@ -357,49 +356,29 @@ def options_delete(realm, id):
 
 @route('/options/<realm>', method='GET')
 def options_get(realm):
-    if realm in option_tables:
+    if realm in ["locations", "actors"]:
         cursor = db_cursor()
 
-        if realm in option_tables_with_parents:
-            # specify parent (integer)
-            cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s ORDER BY id".format(realm), (request.query.parent,))
-        elif realm in option_tables_may_be_human:
-            # specify human (boolean)
-            cursor.execute("SELECT id, name FROM {0} WHERE human = %s ORDER BY id".format(realm), (request.query.human,))
-        else:
-            cursor.execute("SELECT id, name FROM {0} ORDER BY id".format(realm))
+        if realm == "actors":
+            cursor.execute("SELECT id, name FROM actors WHERE human = %s ORDER BY id", (request.query.human,))
+        elif realm == "locations":
+            cursor.execute("SELECT id, name FROM locations ORDER BY id")
 
-        options = [ row for row in cursor.fetchall() ]
-
-        # display children for scandal_types, event_types
-        if realm in ["scandal_types", "event_types"]:
-            if realm == "scandal_types":
-                children_table = "scandal_subtypes"
-            elif realm == "event_types":
-                children_table = "event_subtypes"
-
-            for t in options:
-                cursor.execute("SELECT id, name FROM {0} WHERE parent_id = %s ORDER BY id".format(children_table), (t["id"],))
-                t["children"] = [ row for row in cursor.fetchall() ]
-
-        return js.dumps(options)
+        return js.dumps(cursor.fetchall())
     else:
         abort(404, "Bad options endpoint: {0}.".format(realm))
 
 @route('/options/<realm>', method='POST')
 def options_post(realm):
-    if realm in option_tables:
+    if realm in ["locations", "actors"]:
         conn = psql.connect(conn_string)
         cursor = conn.cursor(cursor_factory=psqlextras.RealDictCursor)
 
-        if realm in option_tables_with_parents:
-            # specify parent (integer)
-            cursor.execute("INSERT INTO {0} (parent_id, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.parent, request.forms.name))
-        elif realm in option_tables_may_be_human:
+        if realm == "actors":
             # specify human (boolean)
-            cursor.execute("INSERT INTO {0} (human, name) VALUES (%s, %s) RETURNING id".format(realm), (request.forms.human, request.forms.name))
-        else:
-            cursor.execute("INSERT INTO {0} (name) VALUES (%s) RETURNING id".format(realm), (request.forms.name,))
+            cursor.execute("INSERT INTO actors (human, name) VALUES (%s, %s) RETURNING id", (request.forms.human, request.forms.name))
+        elif realm == "locations":
+            cursor.execute("INSERT INTO locations (name) VALUES (%s) RETURNING id", (request.forms.name,))
 
         # returning {'id': *new_row_id*}
         info = cursor.fetchone()
