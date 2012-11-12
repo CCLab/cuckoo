@@ -36,7 +36,6 @@ option_tables = [
     "actor_affiliations",
     "actors"
 ]
-option_tables_with_parents = ["scandal_subtypes", "event_subtypes"]
 option_tables_with_children = ["scandal_types", "event_types", "actor_types", "actor_roles", "actor_affiliations"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "actors"]
 
