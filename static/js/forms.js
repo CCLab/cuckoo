@@ -293,30 +293,18 @@ function add_ref_form(link, ref_dict) {
 }
 
 function add_option_popup(link, option_realm) {
-    /* possible realms:
-     *
-     * scandal_types, scandal_subtypes (parent from #scandal_type)
-     * event_types
-     * event_subtypes (parent determined from caller context)
-     * locations, actor_types, actor_roles, actor_affiliations
-     */
+    // possible realms:
+    //  - locations
+    //  - actors
 
     /* create request info to be passed down */
     var request = {};
     request["realm"] = option_realm;
     request["caller"] = link;
 
-    /* determine dialog box title */
     var dialog_title = "Dodaj element";
-    if(option_realm === "scandal_types")             dialog_title = "Dodaj typ afery";
-    else if(option_realm === "scandal_subtypes")     dialog_title = "Dodaj podtyp afery";
-    else if(option_realm === "event_types")          dialog_title = "Dodaj typ wydarzenia";
-    else if(option_realm === "event_subtypes")       dialog_title = "Dodaj podtyp wydarzenia";
-    else if(option_realm === "locations")            dialog_title = "Dodaj lokację";
-    else if(option_realm === "actors")               dialog_title = "Dodaj nazwę aktora";
-    else if(option_realm === "actor_types")          dialog_title = "Dodaj typ aktora";
-    else if(option_realm === "actor_roles")          dialog_title = "Dodaj rolę aktora";
-    else if(option_realm === "actor_affiliations")   dialog_title = "Dodaj afiliację aktora";
+    if(option_realm === "locations")      dialog_title = "Dodaj lokację";
+    else if(option_realm === "actors")    dialog_title = "Dodaj nazwę aktora";
 
     /* create dialog box */
     $("#dialog").data("request", request).dialog({
@@ -324,15 +312,13 @@ function add_option_popup(link, option_realm) {
         buttons: {
             "Dodaj": function() {
                 var request = $(this).data("request");
-                var id = $(request["caller"]).parents("li").data('id');
+                var id = $(request["caller"]).parents("li").children('.event_id').val();
                 
                 var actor_form = $(request["caller"]).parents(".actor");
 
                 var params = {};
                 params["name"] = $("#dialog_option").val();
-                if(request["realm"] === "scandal_subtypes") params["parent"] = $("#scandal_type").val();
-                else if(request["realm"] === "event_subtypes") params["parent"] = $("#event-" + id + "-type").val();
-                else if(request["realm"] === "actors" || request["realm"] === "actor_types" || request["realm"] === "actor_roles" || request["realm"] === "actor_affiliations") {
+                if(request["realm"] === "actors") {
                     if(actor_form.children('input[type="radio"][value="1"]').attr("checked") === "checked") {
                         params["human"] = 1;
                         var human = 1;
@@ -348,42 +334,15 @@ function add_option_popup(link, option_realm) {
                         "id": data.id,
                         "name": $("#dialog_option").val()
                     }
-                    if(request["realm"] === "scandal_types") {
-                        // TODO: append to cuckoo
-                        $("#scandal_type").append(Mustache.render(tpl_select_option, el));
-                        $("#scandal_type").val(data.id).change();
-                    } else if(request["realm"] === "scandal_subtypes") {
-                        // TODO: append to cuckoo
-                        $("#scandal_subtype").append(Mustache.render(tpl_select_option, el));
-                        $("#scandal_subtype").val(data.id);
-                    } else if(request["realm"] === "locations") {
+                    if(request["realm"] === "locations") {
                         cuckoo.locations.push(el);
-                        $("#event-" + id + "-location").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-location").val(data.id);
-                    } else if(request["realm"] === "event_types") {
-                        cuckoo.event_types.push({"id": el.id, "name": el.name, "children": []});
-                        $("#event-" + id + "-type").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-type").val(data.id).change();
-                    } else if(request["realm"] === "event_subtypes") {
-                        insert_subtype(cuckoo.event_types, $("#event-" + id + "-type").val(), el);
-                        $("#event-" + id + "-subtype").append(Mustache.render(tpl_select_option, el));
-                        $("#event-" + id + "-subtype").val(data.id);
+                        var loc = $('.event_id[value="'+id+'"]').siblings('select[id$="location"]');
+                        loc.append(Mustache.render(tpl_select_option, el));
+                        loc.val(data.id);
                     } else if(request["realm"] === "actors") {
                         cuckoo.actors[human].push(el);
                         actor_form.children(".actor_name").append(Mustache.render(tpl_select_option, el));
                         actor_form.children(".actor_name").val(data.id);
-                    } else if(request["realm"] === "actor_types") {
-                        cuckoo.actor_types[human].push(el);
-                        actor_form.children(".actor_type").append(Mustache.render(tpl_select_option, el));
-                        actor_form.children(".actor_type").val(data.id);
-                    } else if(request["realm"] === "actor_roles") {
-                        cuckoo.actor_roles[human].push(el);
-                        actor_form.children(".actor_role").append(Mustache.render(tpl_select_option, el));
-                        actor_form.children(".actor_role").val(data.id);
-                    } else if(request["realm"] === "actor_affiliations") {
-                        cuckoo.actor_affiliations[human].push(el);
-                        actor_form.children(".actor_affiliation").append(Mustache.render(tpl_select_option, el));
-                        actor_form.children(".actor_affiliation").val(data.id);
                     }
 
                     $("#dialog").dialog("close");
