@@ -265,10 +265,10 @@ def options_get(realm):
 
         if realm in option_tables_with_children:
             if realm in option_tables_may_be_human:
-                cursor.execute('SELECT id, name, parent FROM {0} WHERE human = %s'.format(realm),\
+                cursor.execute('SELECT id, name, parent FROM {0} WHERE human = %s ORDER BY name ASC'.format(realm),\
                     (request.query.human,))
             else:
-                cursor.execute('SELECT id, name, parent FROM {0}'.format(realm))
+                cursor.execute('SELECT id, name, parent FROM {0} ORDER BY name ASC'.format(realm))
             types = cursor.fetchall()
 
             # add top nodes to a tree
