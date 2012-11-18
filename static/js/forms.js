@@ -482,9 +482,9 @@ function initDone() {
                     "refs": []
                 };
 
-                event_dict["types"] = cuckootree.getSelected( $(this).children('[id$="-type_tree"]') );
+                event_dict["types"] = cuckootree.getSelected( $(this).find('div[id$="-type_tree"]') );
 
-                $(this).children(".actors").children(".actor").each(function(index, value) {
+                $(this).children(".hideit").children(".actors").children(".actor").each(function(index, value) {
                     var actor_dict = {
                         "id": ($(value).children(".actor_name").val() === "0" ? null : $(value).children(".actor_name").val()),
 
@@ -498,7 +498,7 @@ function initDone() {
                     event_dict['actors'].push(actor_dict);
                 });
 
-                $(this).children(".refs").children(".ref").each(function(index, value) {
+                $(this).children(".hideit").children(".refs").children(".ref").each(function(index, value) {
                     var pub_date = null;
                     if($(value).children('.ref_pub_date_flag').is(':checked')) {
                         pub_date = $(value).children('.ref_pub_date').datepicker("getDate");
@@ -521,7 +521,7 @@ function initDone() {
             window.location.href = "/";
         }, "json");
 
-        // prevent the form from being sent the old-fashioned way
+        // prevent the form from being sent the usual way
         return false;
     });
 }
