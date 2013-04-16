@@ -27,6 +27,9 @@ var tpl_event_form = '<li class="event">'
     + ' <input type="button" class="button-small" value="↓" onclick="move_event(this, \'down\')">'
     + ' <input type="button" class="button-small" value="Usuń wydarzenie" onclick="delete_event(this)">'
     + '</span>'
+    + '<label for="event-{{id}}-tittle">Tytuł wydarzenia</label>'
+    + '<input type="text" class="event_title" id="event-{{id}}-title">'
+    + '<input type="checkbox" name="event-{{id}}-major" id="event-{{id}}-major" value="Ważne">Ważne</input><br />'
     + '<input type="hidden" class="event_id" value="0">'
     + '{{{select_locations}}}'
     + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
@@ -133,10 +136,13 @@ function add_event_form(event_dict) {
 
         // set event_id
         $("#event-" + event_counter + "-location").parent().find("input.event_id").val(event_dict.id);
-
+        if (event_dict.major) { $("#event-" + event_counter + "-major").attr('checked', true);}
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
+        $("#event-" + event_counter + "-title").val( event_dict.title );
+        $("#event-" + event_counter + "-title").val( event_dict.title );
         $("#event-" + event_counter + "-event_date").datepicker("setDate", event_dict.event_date);
         $("#event-" + event_counter + "-description").val( event_dict.description );
+        $("#event-" + event_counter + "-major").val( event_dict.major );        
 
         cuckootree.init( $('#event-' + event_counter + '-type_tree'), 'event_types' )
             .select(event_dict.types).render();
@@ -416,12 +422,19 @@ function initDone() {
 
             $("#scandal_description").val(data.description);
 
+            $("#scandal_background").val(data.background);
+
             if(data.tags !== null) {
                 $("#scandal_tags").val(data.tags.join("; "));
             }
     
             cuckootree.init( $('#scandal_type'), 'scandal_types' )
                 .select(data.types)
+                //.addRequestParam('human', 0)
+                .render();
+    
+            cuckootree.init( $('#scandal_field'), 'scandal_field' )
+                .select(data.fields)
                 //.addRequestParam('human', 0)
                 .render();
 
@@ -448,6 +461,7 @@ function initDone() {
 
         // add scandal type tree
         cuckootree.init( $('#scandal_type'), 'scandal_types' ).render();
+        cuckootree.init( $('#scandal_field'), 'scandal_field' ).render();
     }
 
     /* form handlers */
@@ -455,8 +469,11 @@ function initDone() {
     $("#form-scandal").submit(function() {
         var scandal = {
             "description": $("#scandal_description").val(),
+            "background": $("#scandal_background").val(),
             "type_id": ($("#scandal_type").val() === "0") ? null : parseInt($("#scandal_type").val()),
             "subtype_id": ($("#scandal_subtype").val() === "0") ? null : parseInt($("#scandal_subtype").val()),
+            "field_id": ($("#scandal_field").val() === "0") ? null : parseInt($("#scandal_field").val()),
+            "subfield_id": ($("#scandal_subfield").val() === "0") ? null : parseInt($("#scandal_subfield").val()),
             "tags": $("#scandal_tags").val().split(";")
         };
 
@@ -468,18 +485,23 @@ function initDone() {
         });
 
         scandal["types"] = cuckootree.getSelected( $("#scandal_type") );
+        scandal["fields"] = cuckootree.getSelected( $("#scandal_field") );
 
         scandal["events"] = new Array;
         $("#events li.event").each(function(index, value) {
             var description = $(this).children('[id$="-description"]').val();
+            var title =  $(this).children('[id$="-title"]').val();
+
             if(description !== "") {
                 var event_dict = {
                     "id": $(this).children('.event_id').val(),
+                    "major": $(this).children('[id$="-major"]').attr('checked'),
                     "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
                     "description": description,
                     "actors": [],
-                    "refs": []
+                    "refs": [],
+		    "title": title
                 };
 
                 event_dict["types"] = cuckootree.getSelected( $(this).find('div[id$="-type_tree"]') );
@@ -526,8 +548,10 @@ function initDone() {
     });
 }
 
-$(document).ready(function() {
+$(document).ready( function() {
     init();
+
+    $('#hide').click( function () {$('.hideit').toggle(5)});
 
     $.Shortcuts.add({
         type: 'down',

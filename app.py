@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from bottle import route, get, post, delete, run, template, static_file, request, abort
+from bottle import route, get, post, delete, run, template, static_file, request, abort, redirect
 import simplejson as js
 import psycopg2 as psql
 import psycopg2.extras as psqlextras
 from datetime import datetime, timedelta
 from ConfigParser import ConfigParser
-
 # read database connection settings
 cfg = ConfigParser()
 cfg.read('./db.conf')
@@ -34,7 +33,9 @@ option_tables = [
     "actor_types",
     "actor_roles",
     "actor_affiliations",
-    "actors"
+    "actors",
+    "scandal_field",
+    "scandal_subfields"
 ]
 option_tables_with_children = ["scandal_types", "event_types", "actor_types", "actor_roles", "actor_affiliations"]
 option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "actors"]
@@ -44,6 +45,13 @@ def db_cursor():
     # maybe turn autocommit on?
     conn = psql.connect(conn_string)
     return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+def db_cursor_autocommit():
+    # TODO: deal with conn.commit() somehow
+    # maybe turn autocommit on?
+    conn = psql.connect(conn_string)
+    conn.set_isolation_level(psql.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    return conn.cursor(cursor_factory=psqlextras.RealDictCursor)
+
 
 def find_children(elements, parent):
     parent['children'] = [ {'id': e['id'], 'title': e['name'], 'children': []}\
@@ -71,6 +79,7 @@ def index():
 def scandal_show(scandal_id):
     # new scandal data
     template_dict = {
+        "hideit": "Zwiń/rozwiń",        
         "save": "Zapisz",
         "cancel": "Anuluj"
     }
@@ -81,7 +90,7 @@ def scandal_show(scandal_id):
 @get('/api/scandal/<scandal_id:re:new|\d+>')
 def api_scandal_get(scandal_id):
     cursor = db_cursor()
-    query = '''SELECT name, description, types, tags, events
+    query = '''SELECT name, description, background, types, tags, events, fields
                FROM scandals
                WHERE id = %s
             ''' % scandal_id
@@ -94,7 +103,7 @@ def api_scandal_get(scandal_id):
     if scandal["events"]:
         # fetch events for that scandal
         eids_str = [ str(eid) for eid in scandal["events"] ]
-        query = '''SELECT id, description, location_id, event_date, types, refs
+        query = '''SELECT id, title, description, location_id, event_date, types, refs, title, major
                    FROM events
                    WHERE id IN (%s)
                 ''' % ",".join(eids_str)
@@ -103,8 +112,10 @@ def api_scandal_get(scandal_id):
         query = query + " ORDER BY id = " + " DESC, id = ".join(eids_str) + " DESC"
         cursor.execute(query)
         events = cursor.fetchall()
+
     else:
         events = []
+
 
     # TODO: mill through events, find actors and their attributes
     # TODO: check and operator instead of ifs
@@ -152,15 +163,16 @@ def api_scandal_post(scandal_id):
     data["tags"] = [ tag.strip() for tag in data["tags"] ]
 
     if scandal_id == "new":
-        cursor.execute("INSERT INTO scandals (name, description, types, tags) VALUES (%s, %s, %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["tags"]))
+        cursor.execute("INSERT INTO scandals (name, description, types, tags, background, fields) VALUES (%s, %s, %s, %s,  %s, %s) RETURNING id", (data["name"], data["description"], data["types"], data["tags"], data["background"], data["fields"] ))
         scandal_id = cursor.fetchone()["id"]
         response = {
             "message": "Data stored.",
             "id": scandal_id
         }
+        old_event_ids = []
     else:
         scandal_id = int(scandal_id)
-        cursor.execute("UPDATE scandals SET name = %s, description = %s, types = %s, tags = %s WHERE id = %s", (data["name"], data["description"], data["types"], data["tags"], scandal_id))
+        cursor.execute("UPDATE scandals SET name = %s, description = %s, types = %s, tags = %s, background = %s, fields = %s WHERE id = %s", (data["name"], data["description"], data["types"], data["tags"], data["background"], data["fields"],scandal_id))
         response = {
             "message": "Data stored."
         }
@@ -180,6 +192,7 @@ def api_scandal_post(scandal_id):
     # NOTE: We need to add a day to the returning dates because of
     # some strange behaviour of the jQuery datepicker.
     for event in data["events"]:
+        event["major"] = True if event.get("major", False) else False
         if event["event_date"] is not None:
             dt = datetime.strptime(event["event_date"][:19], "%Y-%m-%dT%H:%M:%S") + timedelta(1,0)
             event["event_date"] = dt.strftime("%Y-%m-%d")
@@ -211,20 +224,20 @@ def api_scandal_post(scandal_id):
         if event["id"] != '0':
             event_id = int(event["id"])
             cursor.execute( 'UPDATE events'\
-                ' SET description = %s, location_id = %s, event_date = %s,'\
-                ' types = %s, refs = %s WHERE id = %s',\
-                (event["description"], event["location_id"], event["event_date"],\
-                event["types"], ref_ids, event_id) )
+                ' SET title = %s, description = %s, location_id = %s, event_date = %s,'\
+                ' types = %s, refs = %s, major = %s WHERE id = %s',\
+                (event["title"],event["description"], event["location_id"],
+                 event["event_date"], event["types"], ref_ids, event["major"], event_id) )
 
             # delete event-actor links so they could later be inserted
             # (they are not tracked via IDs)
             cursor.execute('DELETE FROM actors_events WHERE event_id = %s', (event_id,))
         else:
             cursor.execute( 'INSERT INTO events'\
-                ' (description, location_id, event_date, types, refs)'\
-                ' VALUES (%s, %s, %s, %s, %s) RETURNING id',\
-                (event["description"], event["location_id"], event["event_date"],\
-                event["types"], ref_ids) )
+                ' (title, description, location_id, event_date, types, refs, major)'\
+                ' VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id',\
+                (event["title"], event["description"], event["location_id"], event["event_date"],\
+                event["types"], ref_ids, event["major"]) )
             event_id = cursor.fetchone()["id"]
 
         event_ids.append(event_id)
@@ -250,6 +263,7 @@ def api_scandal_post(scandal_id):
 
 @get('/api/<realm>')
 def options_get(realm):
+
     if realm in option_tables:
         cursor = db_cursor()
 
@@ -390,6 +404,42 @@ def options_post(realm):
 def serve_static(path):
     return static_file(path, root='./static/')
 
+@get('/actor/delete')
+def list_actors():
+
+    template_dict = {}
+    cursor = db_cursor()
+    cursor.execute("SELECT id, name FROM actors")
+    template_dict['actors'] = [ {u'id': row['id'],\
+        u'name': row['name'],}
+        for row in cursor.fetchall()]
+                                
+    return template("delete", template_dict)
+                                    
+@post('/actor/delete')
+def delete_actors():
+    
+    cursor = db_cursor_autocommit ()
+    open('/tmp/keys','w').write(str( request.forms.keys()))
+                                    
+    for actor_id in request.forms.keys():
+         cursor.execute( "DELETE FROM actors_events WHERE actor_id = %s;",  (actor_id,) )
+         print cursor.query
+         print cursor.statusmessage
+         cursor.execute( "DELETE FROM actors WHERE id = %s;",  (actor_id,) )
+         print cursor.query
+         print cursor.statusmessage
+        
+    return redirect('/actor/delete')
+
+@get('/scandal/<sid>/events')                                                                                    
+def list_events(sid):
+  import orm
+  events = orm.query('case_events', sid, connection=psql.connect(conn_string))
+  
+  return template("events", dict(events=events))
+                                                                                
+
 # run(...) should be the last line in app.py
 # (automatically removed on deploy)
-run(host='localhost', port=8080, debug=True, reloader=True)
+run(host='localhost', port=8081, debug=True, reloader=True)
