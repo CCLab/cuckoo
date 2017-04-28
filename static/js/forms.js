@@ -33,7 +33,8 @@ var tpl_event_form = '<li class="event">'
     + '<input type="hidden" class="event_id" value="0">'
     + '{{{select_locations}}}'
     + ' <input type="button" onclick="add_option_popup(this, \'locations\')" class="button-small" value="+">'
-    + '<br>Data wydarzenia'
+    + '<br>Data wydarzenia<br />'
+    + 'Data opisowa: <input type="text" class="event_title" id="event-{{id}}-descriptive_date">'
     + '<br><div id="event-{{id}}-event_date"></div>'
     + '<br><label for="event-{{id}}-description">Opis</label>'
     + '<br><textarea id="event-{{id}}-description" rows="8" cols="50"></textarea>'
@@ -59,6 +60,7 @@ var tpl_actor_form = '<li class="actor">'
     + '<br><label>Typy</label><br><div class="actor_type"></div>'
     + '<br><label>Role</label><br><div class="actor_role"></div>'
     + '<br><label>Afiliacje</label><br><div class="actor_affiliation"></div>'
+    + '<br><label>Afiliacje drugorzędne</label><br><div class="secondary_affiliation"></div>'
     + '<br><label>Tagi (oddzielone średnikiem)</label> <input type="text" class="actor_tags">'
     + '</li>';
 /* TODO: ref form accessability (see actor form TODO) */
@@ -137,6 +139,7 @@ function add_event_form(event_dict) {
         // set event_id
         $("#event-" + event_counter + "-location").parent().find("input.event_id").val(event_dict.id);
         if (event_dict.major) { $("#event-" + event_counter + "-major").attr('checked', true);}
+        $("#event-" + event_counter + "-descriptive_date").val( event_dict.descriptive_date );
         $("#event-" + event_counter + "-location").val( event_dict.location_id );
         $("#event-" + event_counter + "-title").val( event_dict.title );
         $("#event-" + event_counter + "-title").val( event_dict.title );
@@ -414,7 +417,7 @@ function initDone() {
     scandal_id = isNaN(scandal_str) ? null : scandal_str;
 
     // if id was given, load me some scandal data
-    if(scandal_id !== null) {
+/*    if(scandal_id !== null) {
         $.getJSON("/api/scandal/"+scandal_id, function(data) {
             for(i=0; i<data.name.length; i++) {
                 add_scandal_name_field(data.name[i]);
@@ -463,7 +466,7 @@ function initDone() {
         cuckootree.init( $('#scandal_type'), 'scandal_types' ).render();
         cuckootree.init( $('#scandal_field'), 'scandal_field' ).render();
     }
-
+    */
     /* form handlers */
 
     $("#form-scandal").submit(function() {
@@ -498,6 +501,7 @@ function initDone() {
                     "major": $(this).children('[id$="-major"]').attr('checked'),
                     "location_id": ($(this).children('[id$="-location"]').val() === "0") ? null : parseInt($(this).children('[id$="-location"]').val()),
                     "event_date": $(this).children('[id$="-event_date"]').datepicker("getDate"),
+		    "descriptive_date": $(this).children('[id$="-descriptive_date"]').val(),
                     "description": description,
                     "actors": [],
                     "refs": [],

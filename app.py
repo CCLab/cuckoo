@@ -33,12 +33,13 @@ option_tables = [
     "actor_types",
     "actor_roles",
     "actor_affiliations",
+    "secondary_affiliations",
     "actors",
     "scandal_field",
     "scandal_subfields"
 ]
-option_tables_with_children = ["scandal_types", "event_types", "actor_types", "actor_roles", "actor_affiliations"]
-option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "actors"]
+option_tables_with_children = ["scandal_types", "event_types", "actor_types", "actor_roles", "actor_affiliations",]
+option_tables_may_be_human = ["actor_types", "actor_roles", "actor_affiliations", "secondary_affiliations", "actors"]
 
 def db_cursor():
     # TODO: deal with conn.commit() somehow
@@ -103,7 +104,7 @@ def api_scandal_get(scandal_id):
     if scandal["events"]:
         # fetch events for that scandal
         eids_str = [ str(eid) for eid in scandal["events"] ]
-        query = '''SELECT id, title, description, location_id, event_date, types, refs, title, major
+        query = '''SELECT id, title, description, location_id, event_date, types, refs, title, major, descriptive_date
                    FROM events
                    WHERE id IN (%s)
                 ''' % ",".join(eids_str)
@@ -225,19 +226,19 @@ def api_scandal_post(scandal_id):
             event_id = int(event["id"])
             cursor.execute( 'UPDATE events'\
                 ' SET title = %s, description = %s, location_id = %s, event_date = %s,'\
-                ' types = %s, refs = %s, major = %s WHERE id = %s',\
+                ' types = %s, refs = %s, major = %s, descriptive_date = %s WHERE id = %s',\
                 (event["title"],event["description"], event["location_id"],
-                 event["event_date"], event["types"], ref_ids, event["major"], event_id) )
+                 event["event_date"], event["types"], ref_ids, event["major"], event["descriptive_date"], event_id) )
 
             # delete event-actor links so they could later be inserted
             # (they are not tracked via IDs)
             cursor.execute('DELETE FROM actors_events WHERE event_id = %s', (event_id,))
         else:
             cursor.execute( 'INSERT INTO events'\
-                ' (title, description, location_id, event_date, types, refs, major)'\
-                ' VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id',\
+                ' (title, description, location_id, event_date, types, refs, major, descriptive_date)'\
+                ' VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id',\
                 (event["title"], event["description"], event["location_id"], event["event_date"],\
-                event["types"], ref_ids, event["major"]) )
+                event["types"], ref_ids, event["major"], event["descriptive_date"]) )
             event_id = cursor.fetchone()["id"]
 
         event_ids.append(event_id)
@@ -420,7 +421,7 @@ def list_actors():
 def delete_actors():
     
     cursor = db_cursor_autocommit ()
-    open('/tmp/keys','w').write(str( request.forms.keys()))
+#    open('/tmp/keys','w').write(str( request.forms.keys()))
                                     
     for actor_id in request.forms.keys():
          cursor.execute( "DELETE FROM actors_events WHERE actor_id = %s;",  (actor_id,) )
@@ -438,8 +439,13 @@ def list_events(sid):
   events = orm.query('case_events', sid, connection=psql.connect(conn_string))
   
   return template("events", dict(events=events))
-                                                                                
 
+@route('/simple/<scandal_id:re:new|\d+>', method='GET')
+def simple(scandal_id):
+  template_dict = {            "hideit": "Zwiń/rozwiń",                    "save": "Zapisz",                            "cancel": "Anuluj"                                }
+                                
+  return template("simple", template_dict)
+                                                                                  
 # run(...) should be the last line in app.py
 # (automatically removed on deploy)
 run(host='localhost', port=8081, debug=True, reloader=True)
